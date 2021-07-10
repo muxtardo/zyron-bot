@@ -26,18 +26,18 @@ Para começar, clone este projeto.
 Depois de executá-lo, você precisa escanear o Código QR!
 
 ### Algumas Informações
-- Change ownerNumber on [this section](https://github.com/fmedeiros95/Zyron-BOT/blob/main/settings/settings.json#L2)
-- Change groupLimit on [this section](https://github.com/fmedeiros95/Zyron-BOT/blob/main/settings/settings.json#L3)
-- Change memberLimit on [this section](https://github.com/fmedeiros95/Zyron-BOT/blob/main/settings/settings.json#L4)
-- Change prefix on [this section](https://github.com/fmedeiros95/Zyron-BOT/blob/main/settings/settings.json#L5)
-- Change menu on [this section](https://github.com/fmedeiros95/Zyron-BOT/blob/main/lib/menu.js#L32)
-- Change all ApiKey on [this section](https://github.com/fmedeiros95/Zyron-BOT/blob/main/settings/api.json)
-- Get Api ScreenShot on [this website](https://apiflash.com/)
+- Alterar "ownerNumber" [nesta seção](https://github.com/fmedeiros95/Zyron-BOT/blob/main/settings/settings.json#L2)
+- Alterar "groupLimit" [nesta seção](https://github.com/fmedeiros95/Zyron-BOT/blob/main/settings/settings.json#L3)
+- Alterar "memberLimit" [nesta seção](https://github.com/fmedeiros95/Zyron-BOT/blob/main/settings/settings.json#L4)
+- Alterar "prefix" [nesta seção](https://github.com/fmedeiros95/Zyron-BOT/blob/main/settings/settings.json#L5)
+- Alterar o menu [nesta seção](https://github.com/fmedeiros95/Zyron-BOT/blob/main/lib/menu.js#L32)
+- Alterar as chaves API [nesta seção](https://github.com/fmedeiros95/Zyron-BOT/blob/main/settings/api.json)
+- Obtenha a Api ScreenShot [neste site](https://apiflash.com/)
 
 ---
 
 ## Pendências
- - Adicionar mais recurso
+ - Adicionar mais recursos
  
 ---
 
