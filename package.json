@@ -1,6 +1,6 @@
 {
   "name": "zyron-bot",
-  "version": "1.0",
+  "version": "2.1.0",
   "description": "Whatsapp Bot - Node Js",
   "main": "index.js",
   "scripts": {
