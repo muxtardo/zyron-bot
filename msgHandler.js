@@ -226,7 +226,7 @@ module.exports = msgHandler = async (client, message) => {
 
 			if (position !== false) {
                 _levels[groupId][position].xp += amount;
-                fs.writeFileSync('./settings/level.json', jsonEncode(_level));
+                fs.writeFileSync('./settings/level.json', jsonEncode(_levels));
             }
         }
         const addLevelingLevel = (userId) => {
@@ -242,7 +242,7 @@ module.exports = msgHandler = async (client, message) => {
 				var xpDiff	= exp - getLevelingNeedXp(level);
                 _levels[groupId][position].xp	-= xpDiff;
 				_levels[groupId][position].level	+= 1;
-                fs.writeFileSync('./settings/level.json', jsonEncode(_level));
+                fs.writeFileSync('./settings/level.json', jsonEncode(_levels));
             }
         }
         const addLevelingId = (userId) => {
@@ -252,7 +252,7 @@ module.exports = msgHandler = async (client, message) => {
 				level:	1
 			});
 
-			fs.writeFileSync('./settings/level.json', jsonEncode(_level));
+			fs.writeFileSync('./settings/level.json', jsonEncode(_levels));
         }
 		const getLevelingNeedXp = (currentLevel) => {
 			return 5000 * (Math.pow(2, currentLevel) - 1);
@@ -444,7 +444,7 @@ module.exports = msgHandler = async (client, message) => {
 					fs.writeFileSync('./settings/leveling.json', jsonEncode(_levelings));
 
 					_levels[groupId] = [];
-					fs.writeFileSync('./settings/level.json', jsonEncode(_level));
+					fs.writeFileSync('./settings/level.json', jsonEncode(_levels));
 
 					client.reply(from, 'O sistema de nível foi ativado!', id);
 				} else if (args[0] == 'off') {
@@ -457,7 +457,7 @@ module.exports = msgHandler = async (client, message) => {
 					fs.writeFileSync('./settings/leveling.json', jsonEncode(_levelings));
 
 					delete _levels[groupId];
-					fs.writeFileSync('./settings/level.json', jsonEncode(_level));
+					fs.writeFileSync('./settings/level.json', jsonEncode(_levels));
 
 					client.reply(from, 'O sistema de nível foi desativado!', id);
 				} else {
