@@ -375,11 +375,8 @@ module.exports = msgHandler = async (client, message) => {
 			}
 		}
 
-		// [BETA] Avoid Spam Message
-		msgFilter.addFilter(from);
-
 		// function leveling
-		if (isGroupMsg && isLevelingOn && !isCmd) {
+		if (isGroupMsg && isLevelingOn && !isCmd && !msgFilter.isFiltered(from)) {
             const currentLevel	= getLevelingLevel(pengirim);
             const checkId		= getLevelingId(pengirim);
             try {
@@ -401,6 +398,9 @@ module.exports = msgHandler = async (client, message) => {
                 console.error(err);
             }
         }
+
+		// [BETA] Avoid Spam Message
+		msgFilter.addFilter(from);
 
 		// [AUTO READ] Auto read message 
 		client.sendSeen(chatId);
