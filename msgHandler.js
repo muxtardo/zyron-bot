@@ -121,6 +121,9 @@ module.exports = msgHandler = async (client, message) => {
 		const isBotGroupAdmins	= groupAdmins.includes(botNumber) || false
 
 		// Bot Prefix
+		const commands		= caption || body || ''
+		const falas			= commands.toLowerCase();
+
 		body				= (type === 'chat' && body.startsWith(prefix)) ? body : ((type === 'image' && caption || type === 'video' && caption) && caption.startsWith(prefix)) ? caption : ''
 		const command		= body.slice(1).trim().split(/ +/).shift().toLowerCase()
 		const arg			= body.trim().substring(body.indexOf(' ') + 1)
@@ -412,6 +415,37 @@ module.exports = msgHandler = async (client, message) => {
 			);
 		}
 
+		// Falas --->
+			switch (falas) {
+				case 'zyron': 
+					await client.reply(from, `Opa, ta falando de mim?\nDigita *${prefix}menu* pra eu te mostrar o que sei fazer...`, id);
+					break;
+				case 'sexto':
+				case 'sextou':
+				case 'sextô':
+				case 'sextôu':
+					await client.reply(from, 'Ôpa, bora??', id)
+					var gif	= await fs.readFileSync('./media/sextou.webp', { encoding: "base64" })
+					await client.sendImageAsSticker(from, `data:image/gif;base64,${gif.toString('base64')}`)
+					break;
+				case 'bom dia zyron':
+					await client.reply(from, 'Bom dia? Só se for pra você que dormiu a noite toda...', id)
+
+					var gif	= await fs.readFileSync('./media/tudosobcontrole.webp', { encoding: "base64" })
+					await client.sendImageAsSticker(from, `data:image/gif;base64,${gif.toString('base64')}`)
+					break;
+				case 'boa tarde zyron':
+					await client.reply(from, `Boa tarde, são ${moment().format('HH:mm')} e vc ta ai atoa né? Tô ligando pro seu chefe...`, id)
+					break;
+				case 'boa noite zyron':
+					await client.reply(from, `Boa noite pra você também! já são ${moment().format('HH:mm')} to indo nessa também...`, id)
+					break;
+				case 'oi zyron':
+					await client.reply(from, `Fala, o que ta pegando?\nSei fazer algumas coisas, digita *${prefix}menu* pra eu te mostrar...`, id)
+					break;
+			}
+		// <---
+
 		switch (command) {
 			case 'leveling':
 				if (!isGroupMsg) {
@@ -600,7 +634,7 @@ module.exports = msgHandler = async (client, message) => {
 						console.log(err);
 					});
 				break;
-			case 'entraqui':
+			case 'entraaqui':
 				if (args.length == 0) {
 					return client.reply(from, `Quer me adicionar no seu grupo? Me convida\nou usa o comando: *${prefix}join [link_convite]*`, id)
 				}
@@ -1208,7 +1242,7 @@ module.exports = msgHandler = async (client, message) => {
 					return client.reply(from, `Faça uma captura de tela do bot em uma web\n\nUse: ${prefix}printLink [url]\n\nExemplo: ${prefix}printLink https://google.com`, id)
 				}
 
-				const screen = await images.printLink(args[0])
+				const screen = await images.printLink(args[0]);
 				await client.sendFile(from, screen, 'ss.jpg', mess.success, id)
 					.catch(() => {
 						client.reply(from, mess.error.cA, id);
@@ -1216,6 +1250,70 @@ module.exports = msgHandler = async (client, message) => {
 				break;
 			
 			// Other Command
+			case 'buscacep':
+				if (args.length !== 1) {
+					return client.reply(from, 'Me conta seu CEP ai vai?!', id);
+				}
+
+				let response	= await axios.get(`https://viacep.com.br/ws/${args[0]}/json/`)
+				const {
+					logradouro, bairro,
+					localidade, siafi, ibge
+				} = response.data;
+
+				await client.reply(from, mess.wait, id);
+				await client.sendText(from, `🌎️ *Endereço:* ${logradouro}, ${bairro}, ${localidade}\nSiafi: ${siafi}, Ibge: ${ibge} `)
+
+				break
+			case 'meunumero':
+				let chatNumber	= pengirim.split('-');
+				let ddd			= chatNumber[0].substring(2, 4);
+				let number		= chatNumber[0].substring(4, 12);
+
+				await client.reply(from, `Seu numero é *${number}* e seu DDD é *${ddd}*!`, id);
+				break;
+			case 'meexpulsa':
+				if (!isGroupMsg) {
+					return client.reply(from, mess.error.nG, id);
+				}
+
+				if (isGroupAdmins) {
+					return client.reply(from, mess.error.Ki, id);
+				}
+
+				if (!isBotGroupAdmins) {
+					return client.reply(from, mess.error.bA, id);
+				}
+
+				await client.reply(from, 'É pra agooora! kkkk', id)
+					.then(() => {
+						client.removeParticipant(groupId, pengirim);
+					});
+				break;
+			case 'donogrupo':
+				if (!isGroupMsg) {
+					return client.reply(from, mess.error.nG, id);
+				}
+
+				const Owner_	= chat.groupMetadata.owner;
+				if (typeof Owner_ !== 'undefined') {
+					client.sendTextWithMentions(from, `*O dono do grupo é o(a):* @${Owner_}`);
+				} else {
+					client.reply(from, `Cara, parece que o criador do grupo não ta mais aqui...\nDigita *${prefix}adminsGrupo* para ver os administradores.`, id);
+				}
+				break;
+			case 'adminsgrupo':
+				if (!isGroupMsg) {
+					return client.reply(from, mess.error.nG, id);
+				}
+
+				let mimin		= '╔══✪〘 *Admins do Grupo* 〙✪══\n';
+				for (let admon of groupAdmins) {
+					mimin += `╠➥ @${admon.replace(/@c.us/g, '')}\n`;
+				}
+				mimin += '╚═〘 *Z Y R O N  B O T* 〙'
+				await client.sendTextWithMentions(from, mimin);
+				break;
 			case 'tts':
 				let ttsGB		= require('node-gtts')('pt');
 				let dataText	= body.slice(5);
@@ -1256,7 +1354,7 @@ module.exports = msgHandler = async (client, message) => {
 				break;
 			case 'shortlink':
 				if (args.length == 0) {
-					return client.reply(from, `Exemplo: ${prefix}shortlink <url>`, id);
+					return client.reply(from, `Exemplo: ${prefix}shortlink [url]`, id);
 				}
 
 				if (!isUrl(args[0])) {
@@ -1264,7 +1362,7 @@ module.exports = msgHandler = async (client, message) => {
 				}
 
 				const shortlink	= await urlShortener(args[0])
-				await client.sendText(from, shortlink)
+				await client.reply(from, `*Pega o link:* ${shortlink}`, id)
 					.catch(() => {
 						client.reply(from, mess.error.cA, id)
 					});
@@ -1292,7 +1390,7 @@ module.exports = msgHandler = async (client, message) => {
 				client.sendPtt(from, './media/acordaCorno.mp3', id);
 				break;
 			case 'berrante':
-				client.sendPtt(from, './media/berrante.mp3', id);
+				client.sendPtt(from, './media/berrante.mpeg', id);
 				break;
 			case 'bomdia':
 				client.sendPtt(from, './media/bomDiaStreetFighter.mp3', id);
@@ -1489,8 +1587,8 @@ module.exports = msgHandler = async (client, message) => {
 					return client.reply(from, `Desculpe, formato de mensagem errado, por favor.\nResponda às mensagens do bot com o comando ${prefix}apagar`, id);
 				}
 
-				client.deleteMessage(quotedMsgObj.chatId, quotedMsgObj.id, false);
-				break
+				await client.deleteMessage(quotedMsgObj.chatId, quotedMsgObj.id, false);
+				break;
 			case "atualizarconvite":
 				if (!isGroupAdmins) {
 					return client.reply(from, mess.error.oA, id);
@@ -1701,10 +1799,18 @@ module.exports = msgHandler = async (client, message) => {
 					return client.reply(from, mess.error.oO, id);
 				}
 
-				const loadedMsg	= await client.getAmountOfLoadedMessages()
-				const chatIds	= await client.getAllChatIds()
-				const groups	= await client.getAllGroups()
-				client.sendText(from, `Status:\n- *${loadedMsg}* Loaded Messages\n- *${groups.length}* Group Chats\n- *${chatIds.length - groups.length}* Personal Chats\n- *${chatIds.length}* Total Chats`)
+				const loadedMsg			= await client.getAmountOfLoadedMessages();
+				const chatIds			= await client.getAllChatIds();
+				const groups			= await client.getAllGroups();
+
+				// const batteryLevel		= await client.getBatteryLevel();
+            	// const isPlugged			= await client.getIsPlugged(from);
+            	// const connectionState	= await client.getConnectionState();
+				const batteryLevel		= 100;
+				const isPlugged			= true;
+				const connectionState	= 'CONNECTED';
+            
+				await client.reply(from, `Informações:\n-❥ *Status:* ${connectionState}\n-❥ *Bateria:* ${batteryLevel}%\n-❥ *Carregando:* ${(isPlugged) ? '✅' : '❌' }\n\nContadores:\n-❥ *Mensagens:* ${loadedMsg}\n-❥ *Grupos:* ${groups.length}\n-❥ *Conversas:* ${chatIds.length - groups.length}\n-❥ *Total:* ${chatIds.length}`);
 				break;
 			case 'listblock':
 				if (!isOwnerBot) {
