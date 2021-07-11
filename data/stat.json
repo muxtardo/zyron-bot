@@ -1,0 +1,20 @@
+{
+    "sent": {
+        "chat": 167,
+        "image": 25,
+        "sticker": 7,
+        "gp2": 30,
+        "ptt": 14,
+        "notification_template": 2,
+        "vcard": 17
+    },
+    "receive": {
+        "chat": 390,
+        "ptt": 16,
+        "image": 17,
+        "call_log": 1,
+        "sticker": 19,
+        "video": 10,
+        "document": 1
+    }
+}

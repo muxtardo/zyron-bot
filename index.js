@@ -54,18 +54,12 @@ const start = async (client = new Client()) => {
 		const { name }		= gChat;
 		const who			= event.who.replace('@c.us', '');
 
-        const welcome		= jsonDecode(fs.readFileSync('./settings/welcome.json'));
+        const welcome		= jsonDecode(fs.readFileSync('./data/welcome.json'));
 		const isWelcome		= welcome.includes(event.chat);
 
 		// the condition when someone is invited/joined a group via a link
         if (event.action === 'add' && event.who !== host && isWelcome) {
-           	await client.sendTextWithMentions(event.chat, `Olá @${who}!
-Seja bem vindo(a) ao grupo *${name}*!
-
-_– Leia a descrição do grupo para mais informações._
-
-Quer saber meus comandos? Escreva *${prefix}menu*
-Agora, divirta-se!✨`);
+           	await client.sendTextWithMentions(event.chat, `Olá @${who}!\nSeja bem vindo(a) ao grupo *${name}*!\n\n_– Leia a descrição do grupo para mais informações._\n\nQuer saber meus comandos? Escreva *${prefix}menu*\nAgora, divirta-se!✨`);
         }
 
 		// the condition when someone is kicked/out of the group
@@ -98,8 +92,11 @@ Agora, divirta-se!✨`);
     });
 
     client.onIncomingCall(( async (call) => {
-        await client.sendText(call.peerJid, 'Não consigo receber chamadas. ligar = block!')
-        	.then(() => client.contactBlock(call.peerJid));
+        await client.sendText(call.peerJid, 'Não consigo receber chamadas. Se insistir, terei que te bloquear!')
+        	.then(() => {
+                console.log(call);
+                // client.contactBlock(call.peerJid);
+            });
     }));
 	
     // Message log for analytic

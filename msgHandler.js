@@ -9,17 +9,9 @@ moment.tz.setDefault('America/Sao_Paulo');
 const axios	= require('axios');
 const fetch	= require('node-fetch');
 
-const tiktod	= require('tiktok-scraper');
-const appRoot	= require('app-root-path');
-const low		= require('lowdb');
-const FileSync	= require('lowdb/adapters/FileSync');
-const db_group	= new FileSync(appRoot + '/lib/data/group.json');
-
-const db		= low(db_group);
-db.defaults({
-	group: []
-}).write();
-
+const tiktod		= require('tiktok-scraper');
+const Insta			= require('scraper-instagram');
+const InstaClient	= new Insta();
 
 const {
 	exec
@@ -31,6 +23,7 @@ const {
 	translation, 
 	images,
 	api,
+	vCard
 }	= require('./lib');
 
 const { 
@@ -49,18 +42,19 @@ const {
 const fs		= require('fs-extra');
 
 const API		= jsonDecode(fs.readFileSync('./settings/api.json'));
-const banneds	= jsonDecode(fs.readFileSync('./settings/banneds.json'));
-const nsfw		= jsonDecode(fs.readFileSync('./settings/nsfw.json'));
 const settings	= jsonDecode(fs.readFileSync('./settings/settings.json'));
-const users		= jsonDecode(fs.readFileSync('./settings/users.json'));
-const welcome	= jsonDecode(fs.readFileSync('./settings/welcome.json'));
 
-const _levelings	= jsonDecode(fs.readFileSync('./settings/levelings.json'))
-const _levels		= jsonDecode(fs.readFileSync('./settings/levels.json'))
+const banneds	= jsonDecode(fs.readFileSync('./data/banneds.json'));
+const nsfw		= jsonDecode(fs.readFileSync('./data/nsfw.json'));
+const users		= jsonDecode(fs.readFileSync('./data/users.json'));
+const welcome	= jsonDecode(fs.readFileSync('./data/welcome.json'));
 
-let antisticker	= jsonDecode(fs.readFileSync('./lib/helper/antisticker.json'));
-let stickerspam	= jsonDecode(fs.readFileSync('./lib/helper/stickerspam.json'));
-let antilink	= jsonDecode(fs.readFileSync('./lib/helper/antilink.json'));
+const _levelings	= jsonDecode(fs.readFileSync('./data/levelings.json'))
+const _levels		= jsonDecode(fs.readFileSync('./data/levels.json'))
+
+let antisticker	= jsonDecode(fs.readFileSync('./data/antisticker.json'));
+let stickerspam	= jsonDecode(fs.readFileSync('./data/stickerspam.json'));
+let antilink	= jsonDecode(fs.readFileSync('./data/antilink.json'));
 
 let { 
 	ownerNumber, 
@@ -70,7 +64,8 @@ let {
 }	= settings;
 
 const {
-	apiMhBar
+	apiMhBar,
+	tokenInsta
 }	= API;
 
 module.exports = msgHandler = async (client, message) => {
@@ -226,7 +221,7 @@ module.exports = msgHandler = async (client, message) => {
 
 			if (position !== false) {
                 _levels[groupId][position].xp += amount;
-                fs.writeFileSync('./settings/level.json', jsonEncode(_levels));
+                fs.writeFileSync('./data/levels.json', jsonEncode(_levels));
             }
         }
         const addLevelingLevel = (userId) => {
@@ -242,7 +237,7 @@ module.exports = msgHandler = async (client, message) => {
 				var xpDiff	= exp - getLevelingNeedXp(level);
                 _levels[groupId][position].xp	-= xpDiff;
 				_levels[groupId][position].level	+= 1;
-                fs.writeFileSync('./settings/level.json', jsonEncode(_levels));
+                fs.writeFileSync('./data/levels.json', jsonEncode(_levels));
             }
         }
         const addLevelingId = (userId) => {
@@ -252,7 +247,7 @@ module.exports = msgHandler = async (client, message) => {
 				level:	1
 			});
 
-			fs.writeFileSync('./settings/level.json', jsonEncode(_levels));
+			fs.writeFileSync('./data/levels.json', jsonEncode(_levels));
         }
 		const getLevelingNeedXp = (currentLevel) => {
 			return 5000 * (Math.pow(2, currentLevel) - 1);
@@ -302,7 +297,7 @@ module.exports = msgHandler = async (client, message) => {
 								stickerspam[found].msg = 1;
 								const result = '✅ DB Sticker Spam has been reset';
 								console.log(stickerspam[found])
-								fs.writeFileSync('./lib/helper/stickerspam.json', jsonEncode(stickerspam));
+								fs.writeFileSync('./data/stickerspam.json', jsonEncode(stickerspam));
 								client.sendText(from, result);
 							} else {
 								client.reply(from, `${monospace(`Não há números no banco de dados mano.`)}`, id);
@@ -323,7 +318,7 @@ module.exports = msgHandler = async (client, message) => {
 					id:		id,
 					msg:	1
 				});
-				fs.writeFileSync('./lib/helper/stickerspam.json', jsonEncode(stickerspam));
+				fs.writeFileSync('./data/stickerspam.json', jsonEncode(stickerspam));
 
 				return false;
 			}  
@@ -347,7 +342,7 @@ module.exports = msgHandler = async (client, message) => {
 
 			if (found !== false) {
 				stickerspam[found].msg += 1;
-				fs.writeFileSync('./lib/helper/stickerspam.json', jsonEncode(stickerspam));
+				fs.writeFileSync('./data/stickerspam.json', jsonEncode(stickerspam));
 			}
 		}
 
@@ -441,10 +436,10 @@ module.exports = msgHandler = async (client, message) => {
 					}
 
 					_levelings.push(chatId);
-					fs.writeFileSync('./settings/leveling.json', jsonEncode(_levelings));
+					fs.writeFileSync('./data/levelings.json', jsonEncode(_levelings));
 
 					_levels[groupId] = [];
-					fs.writeFileSync('./settings/level.json', jsonEncode(_levels));
+					fs.writeFileSync('./data/levels.json', jsonEncode(_levels));
 
 					client.reply(from, 'O sistema de nível foi ativado!', id);
 				} else if (args[0] == 'off') {
@@ -454,10 +449,10 @@ module.exports = msgHandler = async (client, message) => {
 
 					let xporn	= _levelings.indexOf(chatId);
 					_levelings.splice(xporn, 1);
-					fs.writeFileSync('./settings/leveling.json', jsonEncode(_levelings));
+					fs.writeFileSync('./data/levelings.json', jsonEncode(_levelings));
 
 					delete _levels[groupId];
-					fs.writeFileSync('./settings/level.json', jsonEncode(_levels));
+					fs.writeFileSync('./data/levels.json', jsonEncode(_levels));
 
 					client.reply(from, 'O sistema de nível foi desativado!', id);
 				} else {
@@ -497,7 +492,7 @@ module.exports = msgHandler = async (client, message) => {
 				}
 
 				users.push(sender);
-				fs.writeFileSync('./settings/users.json', jsonEncode(users));
+				fs.writeFileSync('./data/users.json', jsonEncode(users));
 
 				client.reply(from, '[✅] O seu cadastro foi realizado com sucesso!', id);
 				break
@@ -596,12 +591,18 @@ module.exports = msgHandler = async (client, message) => {
 			case 'dev':
 			case 'criador':
 			case 'meucriador':
-				await client.sendContact(from, ownerNumber)
-					.then(() => client.sendText(from, 'Se você quiser solicitar um novo recurso, converse com ele!'));
-				break
+				const vCardOwner = vCard.vCardOwner();
+				await client.sendVCard(from, vCardOwner)
+					.then(() => {
+						client.sendText(from, 'Se você quiser solicitar um novo recurso, converse com ele!');
+					})
+					.catch((err) => {
+						console.log(err);
+					});
+				break;
 			case 'entraqui':
 				if (args.length == 0) {
-					return client.reply(from, `Quer adicionar o BOT ao seu grupo? Convide-o\nou use o comando: *${prefix}join [link_convite]*`, id)
+					return client.reply(from, `Quer me adicionar no seu grupo? Me convida\nou usa o comando: *${prefix}join [link_convite]*`, id)
 				}
 
 				let linkgrup	= body.slice(6);
@@ -768,7 +769,7 @@ module.exports = msgHandler = async (client, message) => {
 						return client.reply(from, '*[Anti Sticker SPAM]* já está ativo no grupo!', id);
 					} else {
 						antisticker.push(chatId);
-						fs.writeFileSync('./lib/helper/antisticker.json', jsonEncode(antisticker));
+						fs.writeFileSync('./data/antisticker.json', jsonEncode(antisticker));
 						client.reply(from, '*[Anti Sticker SPAM]* Foi ativado!\nSe o participante enviar mais de 7 figurinhas seguidas eu irei expulsá-lo!', id);
 					}
 				} else if (args[0] == 'off') {
@@ -779,7 +780,7 @@ module.exports = msgHandler = async (client, message) => {
 					} else {
 						let nixx	= antisticker.indexOf(chatId);
 						antisticker.splice(nixx, 1);
-						fs.writeFileSync('./lib/helper/antisticker.json', jsonEncode(antisticker));
+						fs.writeFileSync('./data/antisticker.json', jsonEncode(antisticker));
 						client.reply(from, '*[Anti Sticker SPAM]* foi desabilitado', id);
 					}
 				} else {
@@ -806,7 +807,7 @@ module.exports = msgHandler = async (client, message) => {
 						return client.reply(from, '*[Anti Group Link]* já está ativo no grupo!', id);
 					} else {
 						antilink.push(chatId);
-						fs.writeFileSync('./lib/helper/antilink.json', jsonEncode(antilink));
+						fs.writeFileSync('./data/antilink.json', jsonEncode(antilink));
 						client.reply(from, '*[Anti Group Link]* Foi ativado!\nSe o participante enviar um convite para grupo, eu irei expulsá-lo!', id);
 					}
 				} else if (args[0] == 'off') {
@@ -817,7 +818,7 @@ module.exports = msgHandler = async (client, message) => {
 					} else {
 						let nixx = antilink.indexOf(chatId);
 						antilink.splice(nixx, 1);
-						fs.writeFileSync('./lib/helper/antilink.json', jsonEncode(antilink));
+						fs.writeFileSync('./data/antilink.json', jsonEncode(antilink));
 						client.reply(from, '*[Anti Group Link]* foi desabilitado', id);
 					}
 				} else {
@@ -1134,16 +1135,27 @@ module.exports = msgHandler = async (client, message) => {
 					});
 				break;
 			case 'stalkig':
+				if (!isOwnerBot) return;
+
 				if (args.length == 0) {
 					return client.reply(from, `Para Stalkear uma conta no Instagram\nUse ${prefix}stalkig [usuário]\nExemplo: ${prefix}stalkig fmedeiros95`, id)
 				}
 
-				const igstalk		= await api.stalkig(args[0])
-				const igstalkpict	= await api.stalkigpict(args[0])
-				await client.sendFileFromUrl(from, igstalkpict, '', igstalk, id)
-					.catch(() => {
-						client.reply(from, mess.error.cA, id);
-					});
+				InstaClient.authBySessionId(tokenInsta)
+				InstaClient.getProfile(args[0])
+					.then((profile) => {
+						var igstalk	= `*ID:* ${profile.id}\n*Nome:* ${profile.name}\n*Bio:* ${profile.bio}\n*Seguidores:* ${highamount(profile.followers)}\n*Seguindo:* ${highamount(profile.following)}\n*Postagens:* ${highamount(profile.posts)}`;
+						if (profile.verified) {
+							igstalk += '\n✅ *Este é um perfil verificado!*';
+						}
+						if (profile.private) {
+							igstalk += '\n❌ *Este é um perfil privado!*';
+						}
+						igstalk	+= `\n\n*Link:* ${profile.link}`;
+
+						client.sendFileFromUrl(from, profile.pic, '', igstalk, id)
+							.catch((err) => client.reply(from, mess.error.cA, id));
+					}).catch((err) => client.reply(from, mess.error.cA, id));
 				break;
 			case 'tiktokstalk':
 				try {
@@ -1156,7 +1168,7 @@ module.exports = msgHandler = async (client, message) => {
 					let { user, stats } = await tiktod.getUserProfileInfo(args[0])
 
 					await client.reply(from, mess.wait, id);
-					var text	= `*ID* : ${user.id}\n*Usuário:* ${user.uniqueId}\n*Apelido:* ${user.nickname}\n*Seguidores:* ${highamount(stats.followerCount)}\n*Seguindo:* ${highamount(stats.followingCount)}\n*Posts:* ${highamount(stats.videoCount)}\n*Luv:* ${highamount(stats.heart)}\n`
+					var text	= `*ID:* ${user.id}\n*Usuário:* ${user.uniqueId}\n*Apelido:* ${user.nickname}\n*Seguidores:* ${highamount(stats.followerCount)}\n*Seguindo:* ${highamount(stats.followingCount)}\n*Posts:* ${highamount(stats.videoCount)}\n*Luv:* ${highamount(stats.heart)}\n`
 					await client.sendFileFromUrl(from, user.avatarLarger, '', text, id)
 						.catch(() => {
 							client.reply(from, mess.error.cA, id);
@@ -1237,6 +1249,7 @@ module.exports = msgHandler = async (client, message) => {
 				}
 
 				const quoteText	= quotedMsg.type == 'chat' ? quotedMsg.body : quotedMsg.type == 'image' ? quotedMsg.caption : ''
+
 				translation.trans(quoteText, args[0])
 					.then((result) => client.sendText(from, result))
 					.catch(() => client.sendText(from, 'Não foi possível realizar a tradução!'))
@@ -1600,7 +1613,7 @@ module.exports = msgHandler = async (client, message) => {
 					}
 
 					welcome.push(chatId);
-					fs.writeFileSync('./settings/welcome.json', jsonEncode(welcome));
+					fs.writeFileSync('./data/welcome.json', jsonEncode(welcome));
 
 					client.reply(from, 'A mensagem de boas-vindas agora está ativada!', id);
 				} else if (args[0] == 'off') {
@@ -1610,7 +1623,7 @@ module.exports = msgHandler = async (client, message) => {
 
 					var xporn = welcome.indexOf(chatId);
 					welcome.splice(xporn, 1);
-					fs.writeFileSync('./settings/welcome.json', jsonEncode(welcome));
+					fs.writeFileSync('./data/welcome.json', jsonEncode(welcome));
 
 					client.reply(from, 'A mensagem de boas-vindas agora está desativada!', id);
 				} else {
@@ -1640,7 +1653,7 @@ module.exports = msgHandler = async (client, message) => {
 					}
 
 					nsfw.push(chatId);
-					fs.writeFileSync('./settings/nsfw.json', jsonEncode(nsfw));
+					fs.writeFileSync('./data/nsfw.json', jsonEncode(nsfw));
 
 					client.reply(from, 'NSFW agora está ativada!', id);
 				} else if (args[0] == 'off') {
@@ -1650,7 +1663,7 @@ module.exports = msgHandler = async (client, message) => {
 
 					var xporn = nsfw.indexOf(chatId);
 					nsfw.splice(xporn, 1);
-					fs.writeFileSync('./settings/nsfw.json', jsonEncode(nsfw));
+					fs.writeFileSync('./data/nsfw.json', jsonEncode(nsfw));
 
 					client.reply(from, 'NSFW agora está desativada!', id);
 				} else {
@@ -1729,17 +1742,17 @@ module.exports = msgHandler = async (client, message) => {
 
 				if (args[0] == 'add') {
 					banneds.push(args[1] + '@c.us');
-					fs.writeFileSync('./settings/banneds.json', jsonEncode(banneds));
+					fs.writeFileSync('./data/banneds.json', jsonEncode(banneds));
 					client.reply(from, 'Feito! Número banido.');
 				} else if (args[0] == 'del') {
 					let xnxx = banneds.indexOf(args[1] + '@c.us');
 					banneds.splice(xnxx, 1);
-					fs.writeFileSync('./settings/banneds.json', jsonEncode(banneds));
+					fs.writeFileSync('./data/banneds.json', jsonEncode(banneds));
 					client.reply(from, 'Feito! Número desbanido.');
 				} else {
 					for (let i = 0; i < mentionedJidList.length; i++) {
 						banneds.push(mentionedJidList[i]);
-						fs.writeFileSync('./settings/banneds.json', jsonEncode(banneds));
+						fs.writeFileSync('./data/banneds.json', jsonEncode(banneds));
 						client.reply(from, 'Feito! Números banidos.');
 					}
 				}

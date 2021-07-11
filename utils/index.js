@@ -24,7 +24,7 @@ const jsonDecode = (data) => {
 
 // Message type Log
 const messageLog = (fromMe, type) => {
-    const stat  = jsonDecode(fs.readFileSync('./utils/stat.json'));
+    const stat  = jsonDecode(fs.readFileSync('./data/stat.json'));
     if (fromMe) {
         if (stat.sent[type]) {
             stat.sent[type] += 1;
@@ -38,7 +38,7 @@ const messageLog = (fromMe, type) => {
             stat.receive[type] = 1;
         }
     }
-    fs.writeFileSync('./utils/stat.json', jsonEncode(stat));
+    fs.writeFileSync('./data/stat.json', jsonEncode(stat));
 }
 
 /**
