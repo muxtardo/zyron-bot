@@ -104,7 +104,7 @@ module.exports = msgHandler = async (client, message) => {
 				oO:	'[❌] Este comando só pode ser usado pelo dono do BOT!',
 				bA:	'[❌] Este comando só pode ser usado quando o BOT é um administrador!',
 				cA: '[❌] Então, eu não fui capaz de atender sua solicitação no momento.',
-				nC: `[❌] Cara, esse comando não existe, mas você pode sugerir, use o comando *${prefix}criador* e envie uma sugestão para o desenvolvedor.`,
+				nC: `[❌] Cara, esse comando não existe, mas você pode sugerir, use o comando *${prefix}sugerir* e envie uma sugestão para o desenvolvedor.`,
 			}
 		}
 
@@ -447,6 +447,47 @@ module.exports = msgHandler = async (client, message) => {
 		// <---
 
 		switch (command) {
+			case 'sugerir':
+				if (args.length == 0) {
+					return client.reply(from, `Envie uma sugestão para o criador\nComando: *${prefix}sugerir texto*\n\n*Exemplo:* ${prefix}sugerir Cria um comando que me da o resultado da mega!`, id);
+				}
+
+				const suggestText	= body.slice(9);
+				if (suggestText.length < 10 || suggestText.length > 300) {
+					return client.reply(from, 'A sua sugestão deve ter entre 10 e 300 caracteres!', id);
+				}
+
+				const suggestNum	= pengirim.replace(/@c.us/g,'');
+				const suggestRep	= `📖〘 *S U G E S T Ã O* 〙📖\n-❥ *Quem enviou?* @${suggestNum}\n-❥ *Qual a sugestão?* ${suggestText}`;
+				await client.sendTextWithMentions(ownerNumber, suggestRep)
+					.then(() => {
+						client.reply(from, 'Sua sugestão foi enviada ao criador do BOT!', id);
+					})
+					.catch((err) => {
+						client.reply(from, mess.error.cA, id);
+					});
+				break;
+			case 'reportar':
+				if (args.length == 0) {
+					return client.reply(from, `Envie um relatório de problema\nComando: *${prefix}reportar texto*\n\n*Exemplo:* ${prefix}reportar O bot não responde, resolve ai!`, id);
+				}
+
+				const bugText	= body.slice(9);
+				if (bugText.length < 10 || bugText.length > 300) {
+					return client.reply(from, 'O seu relatório deve ter entre 10 e 300 caracteres!', id);
+				}
+
+				const bugNum	= pengirim.replace(/@c.us/g,'');
+				const bugRep	= `⚠️〘 *R E L A T Ó R I O* 〙⚠️\n-❥ *Quem enviou?* @${bugNum}\n-❥ *Qual o problema?* ${bugText}`;
+				await client.sendTextWithMentions(ownerNumber, bugRep)
+					.then(() => {
+						client.reply(from, 'O relatório foi enviado ao proprietário do BOT!', id);
+					})
+					.catch((err) => {
+						console.log(err);
+						client.reply(from, mess.error.cA, id);
+					});
+				break;
 			case 'leveling':
 				if (!isGroupMsg) {
 					return client.reply(from, mess.error.nG, id);
@@ -1810,7 +1851,7 @@ module.exports = msgHandler = async (client, message) => {
 				const isPlugged			= true;
 				const connectionState	= 'CONNECTED';
             
-				await client.reply(from, `Informações:\n-❥ *Status:* ${connectionState}\n-❥ *Bateria:* ${batteryLevel}%\n-❥ *Carregando:* ${(isPlugged) ? '✅' : '❌' }\n\nContadores:\n-❥ *Mensagens:* ${loadedMsg}\n-❥ *Grupos:* ${groups.length}\n-❥ *Conversas:* ${chatIds.length - groups.length}\n-❥ *Total:* ${chatIds.length}`);
+				await client.reply(from, `Informações:\n-❥ *Status:* ${connectionState}\n-❥ *Bateria:* ${batteryLevel}%\n-❥ *Carregando:* ${(isPlugged) ? '✅' : '❌' }\n\nContadores:\n-❥ *Mensagens:* ${loadedMsg}\n-❥ *Grupos:* ${groups.length}\n-❥ *Conversas:* ${chatIds.length - groups.length}\n-❥ *Total:* ${chatIds.length}`, id);
 				break;
 			case 'listblock':
 				if (!isOwnerBot) {
@@ -1920,6 +1961,9 @@ module.exports = msgHandler = async (client, message) => {
 				break;
 		}
 	} catch (err) {
-		console.log(color('[EROR]', 'red'), err)
+		await client.sendText(`Puts, deu merda... Usa o comando *${prefix}reportar* e envia isso aqui:\n\n${err}`);
+
+        console.log(color('[ERROR]', 'red'), err);
+        client.kill().then(a => console.log(a));
 	}
 }

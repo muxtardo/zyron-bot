@@ -1,21 +1,21 @@
 {
     "sent": {
-        "chat": 213,
-        "image": 25,
-        "sticker": 13,
-        "gp2": 34,
-        "ptt": 16,
+        "chat": 236,
+        "image": 26,
+        "sticker": 14,
+        "gp2": 35,
+        "ptt": 18,
         "notification_template": 2,
         "vcard": 17,
         "e2e_notification": 1
     },
     "receive": {
-        "chat": 511,
+        "chat": 571,
         "ptt": 17,
-        "image": 18,
+        "image": 20,
         "call_log": 1,
-        "sticker": 23,
-        "video": 20,
+        "sticker": 32,
+        "video": 21,
         "document": 1
     }
 }
