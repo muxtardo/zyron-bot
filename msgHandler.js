@@ -420,11 +420,13 @@ module.exports = msgHandler = async (client, message) => {
 				case 'zyron': 
 					await client.reply(from, `Opa, ta falando de mim?\nDigita *${prefix}menu* pra eu te mostrar o que sei fazer...`, id);
 					break;
+				case 'sextar':
 				case 'sexto':
 				case 'sextou':
 				case 'sextô':
 				case 'sextôu':
-					await client.reply(from, 'Ôpa, bora??', id)
+					await client.reply(from, 'Ôpa, bora??', id);
+					await client.sendPtt(from, './media/filhoRapariga.mp3', id);
 					var gif	= await fs.readFileSync('./media/sextou.webp', { encoding: "base64" })
 					await client.sendImageAsSticker(from, `data:image/gif;base64,${gif.toString('base64')}`)
 					break;
@@ -1456,6 +1458,25 @@ module.exports = msgHandler = async (client, message) => {
 				break;
 			case 'vaiamerda':
 				client.sendPtt(from, './media/vaiPraMerda.mp3', id);
+				break;
+			case 'educu':
+				client.sendPtt(from, './media/eduCu.mp3', id);
+				break;
+			case 'vamosocializar':
+				client.sendPtt(from, './media/vamoSocializar.mp3', id);
+				break;
+			case 'pokemonraro':
+				client.sendPtt(from, './media/pokemonRaro.mp3', id);
+				break;
+			case 'quepokemon':
+				client.sendPtt(from, './media/quePokemon.mp3', id);
+				break;
+			
+			case 'somporcaria':
+				client.sendPtt(from, './media/somPorcaria.mp3', id);
+				break;
+			case 'manesom':
+				client.sendPtt(from, './media/maneSom.mp3', id);
 				break;
 
 			// Group Commands (group admin only)
