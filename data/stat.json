@@ -4,13 +4,13 @@
         "image": 112,
         "sticker": 43,
         "gp2": 144,
-        "ptt": 138,
+        "ptt": 139,
         "notification_template": 5,
         "vcard": 19,
         "e2e_notification": 41
     },
     "receive": {
-        "chat": 1429,
+        "chat": 1432,
         "ptt": 71,
         "image": 66,
         "call_log": 1,
