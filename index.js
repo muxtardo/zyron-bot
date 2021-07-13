@@ -5,7 +5,6 @@ const {
 const {
 	color,
 	messageLog,
-	jsonEncode,
 	jsonDecode
 }	= require('./utils')
 const figlet		= require('figlet')
@@ -37,9 +36,9 @@ const start = async (client = new Client()) => {
     // listening on message
     client.onMessage((async (message) => {
         client.getAmountOfLoadedMessages()
-			.then((msg) => {
-				if (msg >= 3000) {
-					console.log('[~>>]', color(`Loaded Message Reach ${msg}, cuting message cache...`, 'yellow'));
+			.then((msgTotal) => {
+				if (msgTotal >= 3000) {
+					console.log('[~>>]', color(`Loaded Message Reach ${msgTotal}, cuting message cache...`, 'yellow'));
 					client.cutMsgCache();
 				}
 			});
@@ -49,6 +48,7 @@ const start = async (client = new Client()) => {
 
     // when someone enters/leaves from the group
     client.onGlobalParticipantsChanged(async (event) => {
+        console.log(event);
         const host			= await client.getHostNumber() + '@c.us';
 		const gChat			= await client.getChatById(event.chat);
 		const { name }		= gChat;
@@ -107,5 +107,5 @@ const start = async (client = new Client()) => {
 
 // Create session
 create(options(true, start))
-    .then((client) => start(client))
+    .then(async (client) => start(client))
     .catch((err) => new Error(err))

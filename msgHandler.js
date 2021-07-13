@@ -36,7 +36,8 @@ const {
 }	= require('./utils');
 
 const {
-	uploadImages
+	uploadImages,
+	fetchBase64
 }	= require('./utils/fetcher');
 
 const fs		= require('fs-extra');
@@ -56,11 +57,16 @@ let antisticker	= jsonDecode(fs.readFileSync('./data/antisticker.json'));
 let stickerspam	= jsonDecode(fs.readFileSync('./data/stickerspam.json'));
 let antilink	= jsonDecode(fs.readFileSync('./data/antilink.json'));
 
+const errorUrl	= 'https://steamuserimages-a.akamaihd.net/ugc/954087817129084207/5B7E46EE484181A676C02DFCAD48ECB1C74BC423/?imw=512&&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false';
+const errorUrl2	= 'https://steamuserimages-a.akamaihd.net/ugc/954087817129084207/5B7E46EE484181A676C02DFCAD48ECB1C74BC423/?imw=512&&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false';
+
 let { 
 	ownerNumber, 
 	groupLimit, 
 	memberLimit,
-	prefix
+	prefix,
+	botAdmins,
+	botName
 }	= settings;
 
 const {
@@ -73,21 +79,23 @@ module.exports = msgHandler = async (client, message) => {
 		const {
 			type, id, from, t, sender, isGroupMsg, chat,
 			chatId, caption, isMedia, mimetype,
-			quotedMsg, quotedMsgObj, mentionedJidList
-		}	= message
+			quotedMsg, quotedMsgObj, mentionedJidList, author
+		}	= message;
 		let {
 			body
-		}	= message
+		}	= message;
 		var {
 			name,
 			formattedTitle
-		}	= chat
+		}	= chat;
 		let {
 			pushname,
 			verifiedName,
 			formattedName
-		}	= sender
-		pushname	= pushname || verifiedName || formattedName // verifiedName is the name of someone who uses a business account
+		}	= sender;
+
+		// verifiedName is the name of someone who uses a business account
+		pushname	= pushname || verifiedName || formattedName; 
 
 		const mess	= {
 			wait:		'[⏳] Em andamento! Aguarde um momento...',
@@ -135,7 +143,9 @@ module.exports = msgHandler = async (client, message) => {
 		const isQuotedVideo	= quotedMsg && quotedMsg.type == 'video'
 		
 		// [IDENTIFY]
+		const isAdminBot	= botAdmins.includes(pengirim);
 		const isOwnerBot	= ownerNumber.includes(pengirim)
+
 		const isBanned		= banneds.includes(pengirim)
 		const isNsfw		= isGroupMsg ? nsfw.includes(from) : false
 		const isUser		= typeof users[pengirim] !== 'undefined';
@@ -270,10 +280,10 @@ module.exports = msgHandler = async (client, message) => {
 					(j ? i.substr(0, j) + thousands : '') +
 					i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + thousands) +
 					(decimalCount ? decimal + Math.abs(amount - i).toFixed(decimalCount).slice(2) : "");
-			} catch (e) {
-					console.log(e)
+			} catch (err) {
+					console.log(err);
 			}
-		  }
+		}
 
 		function isStickerMsg(id){
 			if (isOwner) {
@@ -329,6 +339,14 @@ module.exports = msgHandler = async (client, message) => {
 
 		const sleep = async (ms) => {
 			return new Promise(resolve => setTimeout(resolve, ms));
+		}
+		const isValidWA	= async (waId) => {
+			var check = await client.checkNumberStatus(toAdd);
+			return check.status == 200;
+		}
+
+		const getRandom	= (list) => {
+			return list[Math.floor((Math.random() * list.length))];
 		}
 
 		function addStickerCount(id) {
@@ -449,6 +467,74 @@ module.exports = msgHandler = async (client, message) => {
 		// <---
 
 		switch (command) {
+			case 'criargrupo':
+				if (!isAdminBot) {
+					return client.reply(from, mess.error.oO, id);
+				}
+
+				console.log(author);
+
+				const listToAdd	= [ author ];
+				for (var i = 1; i < args.length; i++) {
+					var toAdd	= args[i].replace(/@/g,'') + '@c.us';
+					var isValid	= await isValidWA(toAdd);
+
+					if (!listToAdd.includes(toAdd) && isValid) {
+						listToAdd.push(toAdd);
+					}
+				}
+				console.log(listToAdd);
+
+				// let gpId = false;
+				// await client.createGroup(`Grupo do Zyron BOT`, listToAdd)
+				// 	.then(async (res) => {
+				// 		gpId	= `${res.gid.user}@${res.gid.server}`;
+				// 	})
+				// 	.catch((err) => client.reply(from, mess.error.cA, id));
+
+				// if (gpId) {
+				// 	setTimeout(async () => {
+				// 		await client.promoteParticipant(gpId, author);
+				// 		await client.sendText(gpId, 'O grupo foi criado! ✨️');
+				// 	}, 1000);
+				// }
+				break;
+			case 'aiquote':
+            	var aiQuote	= await axios.get("http://inspirobot.me/api?generate=true")
+            	await client.sendFileFromUrl(from, aiQuote.data, 'quote.jpg', 'Powered By http://inspirobot.me With ❤️' , id);
+            	break;
+			case 'estapear':
+				if (!isGroupMsg) {
+					return client.reply(from, mess.error.nG, id);
+				}
+
+				var person	= author.replace('@c.us', '');
+    	        await client.sendGiphyAsSticker(from, 'https://media.giphy.com/media/S8507sBJm1598XnsgD/source.gif');
+				await client.sendTextWithMentions(from, `@${person} *estapeando* ${args[0]}`);
+	            break;
+			case 'infogrupo':
+				if (!isGroupMsg) {
+					return client.reply(from, mess.error.nG, id);
+				}
+
+				var groupMembers	= chat.groupMetadata.participants.length;
+				var groupDesc		= chat.groupMetadata.desc;
+				var groupName		= name;
+				var groupCreate		= moment(chat.groupMetadata.creation * 1000).format('DD/MM/YYYY HH:mm:ss')
+
+				await client.sendText(from, `*${groupName}*\n🌐️ *Membros:* ${highamount(groupMembers)}\n💌️ *Criado em:* ${groupCreate}\n⚜️ *NSFW:* ${(isNsfw ? '✅ ATIVO' : '❌ INATIVO')}\n📃️ *Descrição*\n${groupDesc}`, id)
+					.catch((err) => console.log(err));
+				break;
+			case 'covid':
+				axios.get(`https://coronavirus-19-api.herokuapp.com/countries/brazil`)
+					.then((res) => {
+						var data	= res.data;
+						client.reply(from, `🌎️ *Informações COVID-19*\n\n✨️ *Total de Casos:* ${highamount(data.cases)}\n☣️ *Total de Mortes:* ${highamount(data.deaths)}\n⛩️ *Casos Ativos:* ${highamount(data.active)}`, id);
+					})
+					.catch((err) => {
+						client.reply(from, mess.error.cA, id);
+					});
+				break;
 			case 'sugerir':
 				if (args.length == 0) {
 					return client.reply(from, `Envie uma sugestão para o criador\nComando: *${prefix}sugerir texto*\n\n*Exemplo:* ${prefix}sugerir Cria um comando que me da o resultado da mega!`, id);
@@ -785,8 +871,23 @@ module.exports = msgHandler = async (client, message) => {
 					} else {
 						client.reply(from, `[❌] Enviar ou responder um GIF com o comando *${prefix}stickerGif* (máx. 10s)`, id)
 					}
+				} else if (args.length === 1) {
+					if (!isUrl(url)) {
+						await client.reply(from, mess.error.Iv, id);
+					}
+
+					await client.reply(from, mess.wait, id);
+
+					client.sendStickerfromUrl(from, url)
+						.then((r) => {
+							if (!r && r !== undefined) {
+								client.sendText(from, '[❌] Pô cara, tu tem que me mandar um link de alguma imagem!');
+							} else {
+								client.reply(from, '[✅] Pega aqui sua figurinha!');
+							}
+						});
 				} else {
-					client.reply(from, `[❌] Enviar ou responder um GIF com o comando *${prefix}stickerGif* (máx. 10s)`, id)
+					client.reply(from, `[❌] Cadê?\n\nEnvie ou responda um GIF / Vídeo com o comando\n${prefix}stickerGif\n\nOu então me envia uma mensagem com o comando:\n*${prefix}stickerGif [link]*`, id);
 				}
 				break;
 			case 'stickergiphy':
@@ -903,15 +1004,30 @@ module.exports = msgHandler = async (client, message) => {
 				}
 				break;
 			case 'qrread':
-				if (args.length !== 1) {
-					return client.reply(from, `Use o comando:\n*${prefix}qrread [url]*\n\n*Exemplo:* ${prefix}qrread https://i.ibb.co/phSpp2h/00bed2bb-8b90-4d49-ace1-fe0ac9f73dff.jpg\n\n*Nota:* Primeiro carregue o seu QRCode para https://pt-br.imgbb.com`, id);
-				}
+				if ((isMedia || isQuotedImage) && args.length === 0) {
+					await client.reply(from, mess.wait, id);
 
-				await client.reply(from, mess.wait, id);
-				api.qrread(args[0])
-					.then(async (res) => {
-						await client.reply(from, res, id);
-					});
+					var encryptMedia	= isQuotedImage ? quotedMsg : message;
+					var _mimetype		= isQuotedImage ? quotedMsg.mimetype : mimetype;
+					var mediaData		= await decryptMedia(encryptMedia, uaOverride);
+					var getUrl2			= await uploadImages(mediaData, false);
+					api.qrread(getUrl2)
+						.then(async (res) => {
+							await client.reply(from, res, id);
+						});
+				} else if (args.length === 1) {
+					if (!isUrl(args[0])) {
+						await client.reply(from, mess.error.Iv, id);
+					}
+
+					await client.reply(from, mess.wait, id);
+					api.qrread(args[0])
+						.then(async (res) => {
+							await client.reply(from, res, id);
+						});
+				} else {
+					await client.reply(from, `[❌] Cadê a imagem?\n\nEnvie ou responda uma foto com o comando\n${prefix}qrread\n\nOu então me envia uma mensagem com o comando:\n*${prefix}qrread [link_qrcode]*`, id);
+				}
 				break;
 			case 'qrcode':
 				if (args.length !== 2) {
@@ -979,15 +1095,13 @@ module.exports = msgHandler = async (client, message) => {
 					const bottom		= arg.split('|')[1];
 					const encryptMedia	= isQuotedImage ? quotedMsg : message;
 					const mediaData		= await decryptMedia(encryptMedia, uaOverride);
+					console.log(mediaData);
 					const getUrl		= await uploadImages(mediaData, false);
 					const ImageBase64	= await images.makeMeme(getUrl, top, bottom);
 					client.sendFile(from, ImageBase64, 'image.png', '[✅] Ta na não chefe!', id, true)
-						.then(() => {
-							// client.reply(from, 'Pronto!',id)
-						})
 						.catch(() => {
 							client.reply(from, mess.error.cA)
-						})
+						});
 				} else {
 					await client.reply(from, `Chefe, me envia uma foto com o comando *${prefix}meme texto_topo | texto_rodape*\n*Exemplo:* ${prefix}meme texto topo | texto rodape`, id)
 				}
@@ -1438,6 +1552,9 @@ module.exports = msgHandler = async (client, message) => {
 			case 'bomdia':
 				client.sendPtt(from, './media/bomDiaStreetFighter.mp3', id);
 				break;
+			case 'bomdiasexta':
+				client.sendPtt(from, './media/acordaSexta.mp3', id);
+				break;
 			case 'buzinatrem':
 				client.sendPtt(from, './media/buzinaTrem.mp3', id);
 				break;
@@ -1465,11 +1582,101 @@ module.exports = msgHandler = async (client, message) => {
 			case 'vamosocializar':
 				client.sendPtt(from, './media/vamoSocializar.mp3', id);
 				break;
+			case 'raparigacerta':
+				client.sendPtt(from, './media/raparigaCerta.mp3', id);
+				break;
+			case 'sonhodoido':
+				client.sendPtt(from, './media/sonhoDoido.mp3', id);
+				break;
+			case 'boanoite':
+				client.sendPtt(from, './media/boaNoite.mp3', id);
+				break;
+			case 'risada':
+				client.sendPtt(from, './media/risada.mp3', id);
+				break;
 			case 'pokemonraro':
 				client.sendPtt(from, './media/pokemonRaro.mp3', id);
 				break;
 			case 'quepokemon':
 				client.sendPtt(from, './media/quePokemon.mp3', id);
+				break;
+			case 'vamosacordar':
+				client.sendPtt(from, './media/vamosAcordar.mp3', id);
+				break;
+			case 'cricri':
+				client.sendPtt(from, './media/cricri.mp3', id);
+				break;
+			case 'grupomorrer':
+				client.sendPtt(from, './media/grupoMorrer.mp3', id);
+				break;
+			case 'naointerage':
+				client.sendPtt(from, './media/naoInterage.mp3', id);
+				break;
+			case 'despertador':
+				client.sendPtt(from, './media/despertador.mp3', id);
+				break;
+			case 'gosteidogrupo':
+				client.sendPtt(from, './media/gosteiGrupo.mp3', id);
+				break;
+			case 'naobebomais':
+				client.sendPtt(from, './media/naoBeboMais.mp3', id);
+				var gif	= await fs.readFileSync('./media/naoBeboMais.jpg', { encoding: "base64" })
+				await client.sendImageAsSticker(from, `data:image/gif;base64,${gif.toString('base64')}`)
+				break;
+			case 'caraprocurado':
+				if (!isGroupMsg) {
+					return client.reply(from, mess.error.nG, id);
+				}
+
+				const getRandomMember = async (groupId) => {
+					var groupMembers	= await client.getGroupMembers(groupId);
+					var random			= getRandom(groupMembers);
+
+					if (typeof random == 'undefined') {
+						random			= getRandom(groupMembers);
+					}
+
+					var profilePic		= await client.getProfilePicFromServer(random.id);
+
+					if (botNumber == random.id) {
+						random		= await getRandomMember(groupId);
+					}
+
+					if (profilePic == '' || profilePic == undefined) {
+						random		= await getRandomMember(groupId);
+						profilePic	= await client.getProfilePicFromServer(random.id);
+						if (profilePic == '' || profilePic == undefined) {
+							random		= await getRandomMember(groupId);
+							profilePic	= await client.getProfilePicFromServer(random.id);
+							if (profilePic == '' || profilePic == undefined) {
+								random	= await getRandomMember(groupId);
+							}
+						}
+					}
+
+					return random;
+				};
+
+				const randomMember	= await getRandomMember(groupId);
+				const avatarMember	= await client.getProfilePicFromServer(randomMember.id);
+				if (avatarMember == '' || avatarMember == undefined) {
+					return client.reply(from, mess.error.cA, id);
+				}
+
+				var ImgContent	= await fetchBase64(avatarMember);
+				var ImgBuffer	= Buffer.from(ImgContent.split(',')[1], "base64");
+				var ImgUrl		= await uploadImages(ImgBuffer, false);
+				var ImgBase64	= await images.makeWanted(ImgUrl);
+				var marker		= randomMember.id.replace(/@c.us/g, '');
+
+				await client.sendFile(from, ImgBase64, 'wanted.png', `*Procurado(a):* @${marker}`, id, true)
+					.then((res) => {
+						client.sendPtt(from, './media/caraProcurado.mp3', res);
+					})
+					.catch((err) => {
+						console.log(err);
+						client.reply(from, mess.error.cA, id);
+					});
 				break;
 			
 			case 'somporcaria':

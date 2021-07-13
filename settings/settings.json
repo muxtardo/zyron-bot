@@ -2,5 +2,7 @@
     "ownerNumber": "5512981397042@c.us",
     "memberLimit": 5,
     "groupLimit": 100,
-    "prefix": "$"
+    "prefix": "$",
+    "botAdmins": ["5512981397042@c.us"],
+    "botName": "Zyron"
   }

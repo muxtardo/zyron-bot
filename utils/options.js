@@ -15,6 +15,7 @@ module.exports = options = (headless, start) => {
         useChrome: true,
         killProcessOnBrowserClose: true,
         throwErrorOnTosBlock: false,
+        hostNotificationLang: 'PT_BR',
         chromiumArgs: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
