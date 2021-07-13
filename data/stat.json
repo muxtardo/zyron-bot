@@ -1,16 +1,16 @@
 {
     "sent": {
-        "chat": 585,
+        "chat": 586,
         "image": 135,
         "sticker": 45,
         "gp2": 155,
-        "ptt": 168,
+        "ptt": 170,
         "notification_template": 7,
         "vcard": 20,
         "e2e_notification": 45
     },
     "receive": {
-        "chat": 1826,
+        "chat": 1830,
         "ptt": 77,
         "image": 69,
         "call_log": 1,

@@ -16,6 +16,12 @@ module.exports = options = (headless, start) => {
         killProcessOnBrowserClose: true,
         throwErrorOnTosBlock: false,
         hostNotificationLang: 'PT_BR',
+        popup: 3012,
+        defaultViewport: null,
+        viewport: {
+            width: 1280,
+            height: 720
+        },
         chromiumArgs: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
@@ -26,5 +32,6 @@ module.exports = options = (headless, start) => {
             '--disk-cache-size=0'
         ]
     }
-    return options
+
+    return options;
 }

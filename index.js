@@ -106,6 +106,6 @@ const start = async (client = new Client()) => {
 }
 
 // Create session
-create(options(true, start))
+create(options(false, start))
     .then(async (client) => start(client))
     .catch((err) => new Error(err))
