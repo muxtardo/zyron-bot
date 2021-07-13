@@ -1095,10 +1095,9 @@ module.exports = msgHandler = async (client, message) => {
 					const bottom		= arg.split('|')[1];
 					const encryptMedia	= isQuotedImage ? quotedMsg : message;
 					const mediaData		= await decryptMedia(encryptMedia, uaOverride);
-					console.log(mediaData);
 					const getUrl		= await uploadImages(mediaData, false);
 					const ImageBase64	= await images.makeMeme(getUrl, top, bottom);
-					client.sendFile(from, ImageBase64, 'image.png', '[✅] Ta na não chefe!', id, true)
+					client.sendFile(from, ImageBase64, 'image.png', mess.success, id, true)
 						.catch(() => {
 							client.reply(from, mess.error.cA)
 						});
@@ -1623,32 +1622,48 @@ module.exports = msgHandler = async (client, message) => {
 				var gif	= await fs.readFileSync('./media/naoBeboMais.jpg', { encoding: "base64" })
 				await client.sendImageAsSticker(from, `data:image/gif;base64,${gif.toString('base64')}`)
 				break;
+			case 'procurado':
 			case 'caraprocurado':
 				if (!isGroupMsg) {
 					return client.reply(from, mess.error.nG, id);
 				}
 
 				const getRandomMember = async (groupId) => {
+					console.log('parei aqui 1');
 					var groupMembers	= await client.getGroupMembers(groupId);
+					console.log('parei aqui 2');
 					var random			= getRandom(groupMembers);
 
 					if (typeof random == 'undefined') {
+						console.log('parei aqui 3');
 						random			= getRandom(groupMembers);
 					}
 
-					var profilePic		= await client.getProfilePicFromServer(random.id);
-
 					if (botNumber == random.id) {
+						console.log('parei aqui 3');
 						random		= await getRandomMember(groupId);
 					}
 
-					if (profilePic == '' || profilePic == undefined) {
+					if (author == random.id) {
+						console.log('parei aqui 4');
 						random		= await getRandomMember(groupId);
+					}
+
+					console.log('parei aqui 5');
+					var profilePic		= await client.getProfilePicFromServer(random.id)
+						.catch((err) => console.log(err));
+					if (profilePic == '' || profilePic == undefined) {
+						console.log('parei aqui 6');
+						random		= await getRandomMember(groupId);
+						console.log('parei aqui 7');
 						profilePic	= await client.getProfilePicFromServer(random.id);
 						if (profilePic == '' || profilePic == undefined) {
+							console.log('parei aqui 8');
 							random		= await getRandomMember(groupId);
+							console.log('parei aqui 9');
 							profilePic	= await client.getProfilePicFromServer(random.id);
 							if (profilePic == '' || profilePic == undefined) {
+								console.log('parei aqui 10');
 								random	= await getRandomMember(groupId);
 							}
 						}
@@ -1657,19 +1672,43 @@ module.exports = msgHandler = async (client, message) => {
 					return random;
 				};
 
+				await client.reply(from, '[🖥️] Calma ai, eu tõ consultando o computador da polícia...', id);
+
+				console.log('-parei aqui 0');
 				const randomMember	= await getRandomMember(groupId);
+				console.log('-parei aqui 1');
 				const avatarMember	= await client.getProfilePicFromServer(randomMember.id);
+				console.log('-parei aqui 2');
 				if (avatarMember == '' || avatarMember == undefined) {
 					return client.reply(from, mess.error.cA, id);
 				}
 
 				var ImgContent	= await fetchBase64(avatarMember);
+				console.log('-parei aqui 3');
 				var ImgBuffer	= Buffer.from(ImgContent.split(',')[1], "base64");
+				console.log('-parei aqui 4');
 				var ImgUrl		= await uploadImages(ImgBuffer, false);
+				console.log('-parei aqui 5');
 				var ImgBase64	= await images.makeWanted(ImgUrl);
+				console.log('-parei aqui 6');
 				var marker		= randomMember.id.replace(/@c.us/g, '');
+				console.log('-parei aqui 7');
 
-				await client.sendFile(from, ImgBase64, 'wanted.png', `*Procurado(a):* @${marker}`, id, true)
+				var crimes		= [
+					'Roubar WiFi 😱',
+					'Roubar meu coração ❤️',
+					'Andou de bicicleta na calçada 🤭',
+					'Passou de carro na poça d\'água para molhar pedestres 😂',
+					'Bebeu de mais e ligou pro(a) ex 🤦‍♂️',
+					'Dormiu de mais e perdeu um compromisso 😴',
+					'Dar descarga no vaso sanitário à noite 🚽🌃',
+					'Xingar em público 🤬',
+					'Passou trote no 190 🚔'
+				];
+				var crime		= getRandom(crimes);
+				console.log('-parei aqui 8');
+
+				await client.sendFile(from, ImgBase64, 'wanted.png', `🚨 *Procurado(a):* @${marker}\n-❥ *Crime:* ${crime}\n-❥ *Pena:* 50 anos de reclusão e 500 dias-multa`, id, true)
 					.then((res) => {
 						client.sendPtt(from, './media/caraProcurado.mp3', res);
 					})
