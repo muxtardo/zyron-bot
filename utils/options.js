@@ -16,7 +16,7 @@ module.exports = options = (headless, start) => {
         killProcessOnBrowserClose: true,
         throwErrorOnTosBlock: false,
         hostNotificationLang: 'PT_BR',
-        popup: 3012,
+        // popup: 3012,
         defaultViewport: null,
         viewport: {
             width: 1280,
