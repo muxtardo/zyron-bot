@@ -57,6 +57,8 @@ let antisticker	= jsonDecode(fs.readFileSync('./data/antisticker.json'));
 let stickerspam	= jsonDecode(fs.readFileSync('./data/stickerspam.json'));
 let antilink	= jsonDecode(fs.readFileSync('./data/antilink.json'));
 
+const ttsGB		= require('node-gtts')('pt');
+
 const errorUrl	= 'https://steamuserimages-a.akamaihd.net/ugc/954087817129084207/5B7E46EE484181A676C02DFCAD48ECB1C74BC423/?imw=512&&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false';
 const errorUrl2	= 'https://steamuserimages-a.akamaihd.net/ugc/954087817129084207/5B7E46EE484181A676C02DFCAD48ECB1C74BC423/?imw=512&&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false';
 
@@ -418,7 +420,9 @@ module.exports = msgHandler = async (client, message) => {
         }
 
 		// [BETA] Avoid Spam Message
-		msgFilter.addFilter(from);
+		if (isCmd && !msgFilter.isFiltered(from)) {
+			msgFilter.addFilter(from);
+		}
 
 		// [AUTO READ] Auto read message 
 		client.sendSeen(chatId);
@@ -744,12 +748,40 @@ module.exports = msgHandler = async (client, message) => {
 
 				await client.sendText(from, menuId.textOwner())
 				break;
+			case 'aasg':
+				// const $aasgThumb	= await fetchBase64('https://telegra.ph/file/064a8ab163491fa471d21.png');
+				await client.sendMessageWithThumb(
+					'./media/aasg.png',
+					'https://allstarsgame.com.br',
+					'Anime All-Stars Game',
+					'Anime All-Stars Game é o novo jogo para fãs de anime, em nosso jogo você será um dos personagens emblemáticos dos principais animes que fizeram e fazem parte de nossa vida.',
+					'Cara, tá esperando o que 🤪? Vem logo! Experimente este mundo mágico dos animes, derrote seus inimigos, seja um grande herói 🦸‍♂️ ou um poderoso vilão 🥷!',
+					from
+				);
+				break;
+			case 'cadevoce':
+				const latitude		= 40.78097055110372;
+				const longitude		= -73.96647984371137;
+				const $locationMsg	= await client.sendLocation(from, latitude, longitude, 'Miami Beach Housing Authority Section 8');
+				const $ttsText		= 'Quem acordou, acordou! Quem não acordou, cocoricó né fiiiio!!! Essssqueceee, o pai ta em *Central Park - NY*, essstouuuuradoooo!';
+				client.reply(from, $ttsText, $locationMsg);
+				break;
 			case 'pix':
 			case 'doacao': 
 			case 'doar':
 			case 'fazumpix':
 			case 'apoiarprojeto':
 				await client.sendText(from, menuId.textDonate());
+				break;
+			case 'pix':
+				const $porra = await client.sendPaymentRequest(from, 1000, 'BRL')
+					.then((res) => {
+						console.log(res);
+					})
+					.catch((err) => {
+						console.log(err);
+					});
+				console.log($porra);
 				break;
 			case 'dev':
 			case 'criador':
@@ -764,45 +796,38 @@ module.exports = msgHandler = async (client, message) => {
 					});
 				break;
 			case 'entraaqui':
-				if (args.length == 0) {
-					return client.reply(from, `Quer me adicionar no seu grupo? Me convida\nou usa o comando: *${prefix}join [link_convite]*`, id)
+				if (args.length !== 1) {
+					return client.reply(from, `Quer me adicionar no seu grupo? Me convida\nou usa o comando: *${prefix}entraAqui [link_convite]*`, id)
 				}
 
-				let linkgrup	= body.slice(6);
-				let islink		= linkgrup.match(/(https:\/\/chat.whatsapp.com)/gi);
-				let chekgrup	= await client.inviteInfo(linkgrup);
-				if (!islink) {
+				let inviteLink	= args[0];
+				let isLink		= inviteLink.match(/(https:\/\/chat.whatsapp.com)/gi);
+				if (!isLink) {
 					return client.reply(from, mess.error.Iv, id);
 				}
+				
+				const inviteDetails	= await client.inviteInfo(inviteLink);
 
-				if (isOwnerBot) {
-					await client.joinGroupViaLink(linkgrup)
-						.then(async () => {
-							await client.reply(from, '[✅] Entrou no grupo com sucesso por meio do link!', id);
-							await client.sendText(chekgrup.id, `Eu sou o Zyron BOT. Para descobrir os comandos neste bot, use o comando *${prefix}menu*`);
-						})
-						.catch(() => {
-							client.reply(from, mess.error.cA, id);
-						})
-				} else {
-					let cgrup = await client.getAllGroups();
-					if (cgrup.length > groupLimit) {
-						return client.reply(from, `[❌] Desculpe, o BOT está sem vagas no momento.\nLimite de grupos: ${groupLimit}`, id);
+				if (!isOwnerBot) {
+					var myGroups = await client.getAllGroups();
+					if (myGroups.length >= groupLimit) {
+						return client.reply(from, `[❌] Desculpa, mas eu não tenho uma vaga disponível no momento.`, id);
 					}
 
-					if (cgrup.size < memberLimit) {
-						return client.reply(from, `[❌] Desculpe, o BOT não entrará se os membros do grupo não excederem ${memberLimit} pessoas.`, id)
+					var members	= inviteDetails.participants;
+					if (typeof members == 'undefined' || members.length < memberLimit) {
+						return client.reply(from, `[❌] Desculpa, mas eu não consigo ne manter em um grupo com menos de ${memberLimit} membros.`, id)
 					}
-
-					await client.joinGroupViaLink(linkgrup)
-						.then(async () =>{
-							await client.reply(from, '[✅] Entrou no grupo com sucesso por meio do link!', id);
-							await client.sendText(chekgrup.id, `Eu sou o Zyron BOT. Para descobrir os comandos neste bot, use o comando *${prefix}menu*`);
-						})
-						.catch(() => {
-							client.reply(from, mess.error.cA, id)
-						});
 				}
+
+				await client.joinGroupViaLink(inviteLink)
+					.then(async () => {
+						await client.reply(from, '[✅] Entrou no grupo!', id);
+						await client.sendText(inviteDetails.id, `Fala galerinha do grupo *${inviteDetails.subject}*, como vocês estão?\nEu me chamo *${botName}*, para descobrir o que posso fazer, use o comando *${prefix}menu*`);
+					})
+					.catch(() => {
+						client.reply(from, mess.error.cA, id);
+					});
 				break;
 
 			// Sticker Converter
@@ -897,6 +922,7 @@ module.exports = msgHandler = async (client, message) => {
 
 				const isGiphy		= url.match(new RegExp(/https?:\/\/(www\.)?giphy.com/, 'gi'));
 				const isMediaGiphy	= url.match(new RegExp(/https?:\/\/media.giphy.com\/media/, 'gi'));
+				const isMedia2Giphy	= url.match(new RegExp(/https?:\/\/media2.giphy.com\/media/, 'gi'));
 				if (isGiphy) {
 					const getGiphyCode	= url.match(new RegExp(/(\/|\-)(?:.(?!(\/|\-)))+$/, 'gi'));
 					if (!getGiphyCode) {
@@ -909,7 +935,7 @@ module.exports = msgHandler = async (client, message) => {
 						.then(() => {
 							client.reply(from, '[✅] Pega aqui sua figurinha!');
 						})
-				} else if (isMediaGiphy) {
+				} else if (isMediaGiphy || isMedia2Giphy) {
 					const gifUrl	= url.match(new RegExp(/(giphy|source).(gif|mp4)/, 'gi'))
 					if (!gifUrl) {
 						return client.reply(from, '[❌] Pô, não achai este link do Giphy', id);
@@ -1091,8 +1117,13 @@ module.exports = msgHandler = async (client, message) => {
 				if ((isMedia || isQuotedImage) && args.length >= 2) {
 					await client.reply(from, mess.wait, id);
 
-					const top			= arg.split('|')[0];
-					const bottom		= arg.split('|')[1];
+					var texts	= arg.split('|');
+					if (texts.length !== 2) {
+						return client.reply(from, `Chefe, me envia uma foto com o comando *${prefix}meme texto_topo | texto_rodape*\n*Exemplo:* ${prefix}meme texto topo | texto rodape`, id)
+					}
+
+					const top			= texts[0];
+					const bottom		= texts[1];
 					const encryptMedia	= isQuotedImage ? quotedMsg : message;
 					const mediaData		= await decryptMedia(encryptMedia, uaOverride);
 					const getUrl		= await uploadImages(mediaData, false);
@@ -1120,7 +1151,7 @@ module.exports = msgHandler = async (client, message) => {
 						client.reply('[❌] Então... O processo falhou! O conteúdo que você enviou está correto ou não?..', id)
 					}
 				} else {
-					client.reply(from, `Comando: *${prefix}citar |texto|autor*\n\n*Exemplo:* ${prefix}citar |Eu amo Você|-Zyron BOT`);
+					client.reply(from, `Comando: *${prefix}citar |texto|autor*\n\n*Exemplo:* ${prefix}citar |Eu amo Você|-${botName}`);
 				}
 				break;
 			case 'escreva':
@@ -1283,6 +1314,10 @@ module.exports = msgHandler = async (client, message) => {
 		
 			// Search Any
 			case 'imagens':
+				if (!isOwnerBot) {
+					return client.reply(from, 'Este comando está passando por manutenção!', id);
+				}
+
 				if (args.length == 0) {
 					return client.reply(from, `Para pesquisar fotos do Pinterest\nUse: ${prefix}imagens [busca]\nExemplo: ${prefix}imagens naruto`, id);
 				}
@@ -1295,6 +1330,10 @@ module.exports = msgHandler = async (client, message) => {
 					});
 				break;
 			case 'sreddit':
+				if (!isNsfw) {
+					return client.reply(from, '[❌] O NSFW não está ativado', id);
+				}
+
 				if (args.length == 0) {
 					return client.reply(from, `Para procurar uma imagem de um subreddit\nuse: ${prefix}sreddit [search]\nExemplo: ${prefix}sreddit naruto`, id);
 				}
@@ -1347,7 +1386,7 @@ module.exports = msgHandler = async (client, message) => {
 							.catch((err) => client.reply(from, mess.error.cA, id));
 					}).catch((err) => client.reply(from, mess.error.cA, id));
 				break;
-			case 'tiktokstalk':
+			case 'stalktiktok':
 				try {
 					if (args.length < 1) {
 						return client.sendMessage(from, 'Nome? ', text, {quoted: mek})
@@ -1371,6 +1410,7 @@ module.exports = msgHandler = async (client, message) => {
 				if (args.length == 0) {
 					return client.reply(from, `Para pesquisar uma palavra da wikipedia\nExemplo: ${prefix}wiki [busca]`, id)
 				}
+
 				const wikip	= body.slice(6);
 				const wikis	= await api.wiki(wikip);
 				await client.reply(from, wikis, id)
@@ -1463,16 +1503,38 @@ module.exports = msgHandler = async (client, message) => {
 					return client.reply(from, mess.error.nG, id);
 				}
 
-				let mimin		= '╔══✪〘 *Admins do Grupo* 〙✪══\n';
-				for (let admon of groupAdmins) {
-					mimin += `╠➥ @${admon.replace(/@c.us/g, '')}\n`;
+				var list		= '╔══✪〘 *Admins do Grupo* 〙✪══\n';
+				for (var admin of groupAdmins) {
+					list += `╠➥ @${admin.replace(/@c.us/g, '')}\n`;
 				}
-				mimin += '╚═〘 *Z Y R O N  B O T* 〙'
-				await client.sendTextWithMentions(from, mimin);
+				await client.sendTextWithMentions(from, list);
+				break;
+			case 'tts2':
+				if (quotedMsg && !isQuotedImage && !isQuotedVideo) {
+					var ttsText	= quotedMsg.body;					
+					console.log(dataText);
+				} else {
+					var ttsText	= body.slice(5);
+				}
+				
+				if (ttsText === '') {
+					return client.reply(from, 'Cadê o texto..?', id);
+				}
+
+				if (ttsText.length > 250) {
+					return client.reply(from, 'O texto é muito longo...', id);
+				}
+
+				try {
+					ttsGB.save('./media/tts.mp3', ttsText, function () {
+						client.sendPtt(from, './media/tts.mp3', id);
+					})
+				} catch (err) {
+					client.reply(from, err, id);
+				}
 				break;
 			case 'tts':
-				let ttsGB		= require('node-gtts')('pt');
-				let dataText	= body.slice(5);
+				var dataText	= body.slice(5);
 				if (dataText === '') {
 					return client.reply(from, 'Você não informou o texto...', id);
 				}
@@ -1538,6 +1600,15 @@ module.exports = msgHandler = async (client, message) => {
 					.catch(() => {
 						client.reply(from, mess.error.cA, id);
 					})
+				break;
+			case 'querotreta':
+				client.sendPtt(from, './media/queroTreta.mp4', id);
+				break;
+			case 'golvila':
+				client.sendPtt(from, './media/golVila.mp4', id);
+				break;
+			case 'golgoias':
+				client.sendPtt(from, './media/golGoias.mp4', id);
 				break;
 			case 'acorda':
 				client.sendPtt(from, './media/acorda.mp3', id);
@@ -1622,98 +1693,49 @@ module.exports = msgHandler = async (client, message) => {
 				var gif	= await fs.readFileSync('./media/naoBeboMais.jpg', { encoding: "base64" })
 				await client.sendImageAsSticker(from, `data:image/gif;base64,${gif.toString('base64')}`)
 				break;
+			case 'wanted':
 			case 'procurado':
 			case 'caraprocurado':
 				if (!isGroupMsg) {
 					return client.reply(from, mess.error.nG, id);
 				}
 
-				const getRandomMember = async (groupId) => {
-					console.log('parei aqui 1');
-					var groupMembers	= await client.getGroupMembers(groupId);
-					console.log('parei aqui 2');
-					var random			= getRandom(groupMembers);
-
-					if (typeof random == 'undefined') {
-						console.log('parei aqui 3');
-						random			= getRandom(groupMembers);
-					}
-
-					if (botNumber == random.id) {
-						console.log('parei aqui 3');
-						random		= await getRandomMember(groupId);
-					}
-
-					if (author == random.id) {
-						console.log('parei aqui 4');
-						random		= await getRandomMember(groupId);
-					}
-
-					console.log('parei aqui 5');
-					var profilePic		= await client.getProfilePicFromServer(random.id)
-						.catch((err) => console.log(err));
-					if (profilePic == '' || profilePic == undefined) {
-						console.log('parei aqui 6');
-						random		= await getRandomMember(groupId);
-						console.log('parei aqui 7');
-						profilePic	= await client.getProfilePicFromServer(random.id);
-						if (profilePic == '' || profilePic == undefined) {
-							console.log('parei aqui 8');
-							random		= await getRandomMember(groupId);
-							console.log('parei aqui 9');
-							profilePic	= await client.getProfilePicFromServer(random.id);
-							if (profilePic == '' || profilePic == undefined) {
-								console.log('parei aqui 10');
-								random	= await getRandomMember(groupId);
-							}
-						}
-					}
-
-					return random;
-				};
-
 				await client.reply(from, '[🖥️] Calma ai, eu tõ consultando o computador da polícia...', id);
 
-				console.log('-parei aqui 0');
-				const randomMember	= await getRandomMember(groupId);
-				console.log('-parei aqui 1');
-				const avatarMember	= await client.getProfilePicFromServer(randomMember.id);
-				console.log('-parei aqui 2');
-				if (avatarMember == '' || avatarMember == undefined) {
-					return client.reply(from, mess.error.cA, id);
+				var groupMembers		= await client.getGroupMembers(groupId);
+				const randomMember		= await images.randomMember(client, author, botNumber, groupMembers);
+				if (!randomMember) {
+					return client.reply(from, '[🤖] Fiquem tranquilos, não existe nenhum procurado(a) neste grupo!', id);
 				}
 
-				var ImgContent	= await fetchBase64(avatarMember);
-				console.log('-parei aqui 3');
-				var ImgBuffer	= Buffer.from(ImgContent.split(',')[1], "base64");
-				console.log('-parei aqui 4');
-				var ImgUrl		= await uploadImages(ImgBuffer, false);
-				console.log('-parei aqui 5');
-				var ImgBase64	= await images.makeWanted(ImgUrl);
-				console.log('-parei aqui 6');
-				var marker		= randomMember.id.replace(/@c.us/g, '');
-				console.log('-parei aqui 7');
-
-				var crimes		= [
-					'Roubar WiFi 😱',
-					'Roubar meu coração ❤️',
-					'Andou de bicicleta na calçada 🤭',
-					'Passou de carro na poça d\'água para molhar pedestres 😂',
-					'Bebeu de mais e ligou pro(a) ex 🤦‍♂️',
-					'Dormiu de mais e perdeu um compromisso 😴',
-					'Dar descarga no vaso sanitário à noite 🚽🌃',
-					'Xingar em público 🤬',
-					'Passou trote no 190 🚔'
+				var crimes			= [
+					['Estava roubando WiFi 😱', 'O elemento estava roubando WiFi!'],
+					['Destruidor de corações 💔', 'O elemento é destruidor(a) de corações'],
+					['Andou de bicicleta na calçada 🤭', 'O elemento andou de bicicleta na calçada'],
+					['Passou de carro na poça d\'água para molhar pedestres 😂', 'O elemento passou de carro na poça d\'água para molhar pedestres'],
+					['Bebeu de mais e ligou pro(a) ex 🤦‍♂️', 'O elemento bebeu de mais e ligou pro(a) ex'],
+					['Dormiu de mais e perdeu um compromisso 😴', 'O elemento dormiu de mais e perdeu um compromisso'],
+					['Dar descarga no vaso à noite 🚽🌃', 'O elemento deu descarga no vaso à noite'],
+					['Xingar em público 🤬', 'O elemento realizou xingamentos em público'],
+					['Passou trote no 190 🚔', 'O elemento passou trote no 190'],
 				];
-				var crime		= getRandom(crimes);
-				console.log('-parei aqui 8');
+				var crime			= getRandom(crimes);
 
-				await client.sendFile(from, ImgBase64, 'wanted.png', `🚨 *Procurado(a):* @${marker}\n-❥ *Crime:* ${crime}\n-❥ *Pena:* 50 anos de reclusão e 500 dias-multa`, id, true)
+				var avatarMember	= await client.getProfilePicFromServer(randomMember.id);
+				if (!isUrl(avatarMember)) {
+					return client.reply(from, '[🤖] Fiquem tranquilos, não existe nenhum procurado(a) neste grupo!', id);
+				}
+				var ImgContent		= await fetchBase64(avatarMember);
+				var ImgBuffer		= Buffer.from(ImgContent.split(',')[1], "base64");
+				var ImgUrl			= await uploadImages(ImgBuffer, false);
+				var ImgBase64		= await images.makeWanted(ImgUrl, crime[1]);
+				var marker			= randomMember.id.replace(/@c.us/g, '');
+
+				await client.sendFile(from, ImgBase64, 'wanted.png', `🚨 *Procurado(a):* @${marker}\n-❥ *Crime:* ${crime[0]}\n-❥ *Pena:* 50 anos de reclusão e 500 dias-multa`, id, true)
 					.then((res) => {
 						client.sendPtt(from, './media/caraProcurado.mp3', res);
 					})
 					.catch((err) => {
-						console.log(err);
 						client.reply(from, mess.error.cA, id);
 					});
 				break;
@@ -1865,8 +1887,7 @@ module.exports = msgHandler = async (client, message) => {
 
 				await client.demoteParticipant(groupId, mentionedJidList[0])
 				await client.sendTextWithMentions(from, `Pronto! Agora @${mentionedJidList[0].replace('@c.us', '')} não é mais um administrador.`)
-				break
-			case 'tchau':
+				break;
 			case 'vaiembora':
 				if (!isGroupMsg) {
 					return client.reply(from, mess.error.nG, id);
@@ -1876,7 +1897,9 @@ module.exports = msgHandler = async (client, message) => {
 					return client.reply(from, mess.error.oA, id);
 				}
 
-				client.sendText(from, 'Até a próxima! ( ⇀‸↼‶ )').then(() => client.leaveGroup(groupId));
+				await client.sendText(from, 'Até a próxima! ( ⇀‸↼‶ )').then(() => {
+					client.leaveGroup(groupId);
+				});
 				break
 			case 'apagar':
 				if (!isGroupMsg) {
@@ -1909,7 +1932,7 @@ module.exports = msgHandler = async (client, message) => {
 				if (isBotGroupAdmins) {
 					client.revokeGroupInviteLink(from)
 						.then((res) => {
-							client.reply(from, `O convite foi redefinido!\n\nPara obter o link de convite do grupo, use o comando:\n*${prefix}conviteGrupo* `, id);
+							client.reply(from, `O convite foi atualizado!\n\nPara obter o link de convite do grupo, use o comando:\n*${prefix}conviteGrupo* `, id);
 						})
 						.catch((err) => {
 							console.log(`[ERR] ${err}`);
@@ -1926,13 +1949,11 @@ module.exports = msgHandler = async (client, message) => {
 				}
 
 				const groupMem	= await client.getGroupMembers(groupId)
-				let hehex		= '╔══✪〘 Membros do Grupo 〙✪══\n';
-				for (let i = 0; i < groupMem.length; i++) {
-					hehex += '╠➥';
-					hehex += ` @${groupMem[i].id.replace(/@c.us/g, '')}\n`;
+				var list		= '╔══✪〘 Membros do Grupo 〙✪══\n';
+				for (var i = 0; i < groupMem.length; i++) {
+					list += `╠➥ @${groupMem[i].id.replace(/@c.us/g, '')}\n`;
 				}
-				hehex += '╚═〘 *Z Y R O N  B O T* 〙'
-				await client.sendTextWithMentions(from, hehex);
+				await client.sendTextWithMentions(from, list);
 				break;
 			case 'apenasadm':
 				if (!isGroupMsg) {
@@ -2133,7 +2154,6 @@ module.exports = msgHandler = async (client, message) => {
 				for (let i of blockNumber) {
 					textBlock += `╠➥ @${i.replace(/@c.us/g,'')}\n`;
 				}
-				textBlock += '╚═〘 *Z Y R O N  B O T* 〙'
 
 				client.sendTextWithMentions(from, textBlock, id);
 				break;

@@ -1,23 +1,30 @@
 {
     "sent": {
-        "chat": 586,
-        "image": 135,
-        "sticker": 45,
-        "gp2": 155,
-        "ptt": 170,
-        "notification_template": 7,
-        "vcard": 20,
-        "e2e_notification": 45
+        "chat": 1708,
+        "image": 381,
+        "sticker": 271,
+        "gp2": 286,
+        "ptt": 692,
+        "notification_template": 15,
+        "vcard": 26,
+        "e2e_notification": 104,
+        "location": 10,
+        "document": 3,
+        "payment": 1,
+        "video": 16,
+        "audio": 1
     },
     "receive": {
-        "chat": 1830,
-        "ptt": 77,
-        "image": 69,
+        "chat": 6321,
+        "ptt": 408,
+        "image": 450,
         "call_log": 1,
-        "sticker": 78,
-        "video": 38,
-        "document": 1,
-        "location": 1,
-        "audio": 7
+        "sticker": 454,
+        "video": 232,
+        "document": 4,
+        "location": 2,
+        "audio": 21,
+        "vcard": 4,
+        "ciphertext": 1
     }
 }

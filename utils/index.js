@@ -96,11 +96,28 @@ const addFilter = (from) => {
     }, 5000) // 5sec is delay before processing next command
 }
 
+/**
+ * Shuffles array in place.
+ * @param {Array} a items An array containing the items.
+ */
+function shuffle(arr) {
+    let j, x;
+    for (let i = arr.length - 1; i > 0; i--) {
+        j = Math.floor(Math.random() * (i + 1));
+        x = arr[i];
+        arr[i] = arr[j];
+        arr[j] = x;
+    }
+
+    return arr;
+}
+
 module.exports = {
     msgFilter: {
         isFiltered,
         addFilter
     },
+    shuffle,
     jsonEncode,
     jsonDecode,
     processTime,
