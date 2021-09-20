@@ -47,6 +47,17 @@ const start = async (client = new Client()) => {
 		msgHandler(client, message);
 	}))
 
+	client.onButton((async(chat) => {
+		console.log('teste')
+		console.log(chat)
+
+		if (chat?.body == 'Botão 1'){
+			await client.sendText(chat?.chatId, `Você apertou o botão 1`)
+		} else {
+			await client.sendText(chat?.chatId, `Você apertou o botão 2`)
+		}
+	}))
+
 	// when someone enters/leaves from the group
 	client.onGlobalParticipantsChanged(async (event) => {
 		const host			= await client.getHostNumber() + '@c.us';
@@ -119,6 +130,6 @@ const start = async (client = new Client()) => {
 }
 
 // Create session
-create(options(true, start))
+create(options(false, start))
 	.then(async (client) => start(client))
 	.catch((err) => new Error(err))

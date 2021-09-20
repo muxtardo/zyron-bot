@@ -439,7 +439,7 @@ module.exports = msgHandler = async (client, message) => {
 
 		// Falas --->
 			switch (falas) {
-				case 'zyron': 
+				case botName: 
 					await client.reply(from, `Opa, ta falando de mim?\nDigita *${prefix}menu* pra eu te mostrar o que sei fazer...`, id);
 					break;
 				case 'sextar':
@@ -452,19 +452,19 @@ module.exports = msgHandler = async (client, message) => {
 					var gif	= await fs.readFileSync('./media/sextou.webp', { encoding: "base64" })
 					await client.sendImageAsSticker(from, `data:image/gif;base64,${gif.toString('base64')}`)
 					break;
-				case 'bom dia zyron':
+				case 'bom dia ' + botName:
 					await client.reply(from, 'Bom dia? Só se for pra você que dormiu a noite toda...', id)
 
 					var gif	= await fs.readFileSync('./media/tudosobcontrole.webp', { encoding: "base64" })
 					await client.sendImageAsSticker(from, `data:image/gif;base64,${gif.toString('base64')}`)
 					break;
-				case 'boa tarde zyron':
+				case 'boa tarde ' + botName:
 					await client.reply(from, `Boa tarde, são ${moment().format('HH:mm')} e vc ta ai atoa né? Tô ligando pro seu chefe...`, id)
 					break;
-				case 'boa noite zyron':
+				case 'boa noite ' + botName:
 					await client.reply(from, `Boa noite pra você também! já são ${moment().format('HH:mm')} to indo nessa também...`, id)
 					break;
-				case 'oi zyron':
+				case 'oi ' + botName:
 					await client.reply(from, `Fala, o que ta pegando?\nSei fazer algumas coisas, digita *${prefix}menu* pra eu te mostrar...`, id)
 					break;
 			}
@@ -843,58 +843,46 @@ module.exports = msgHandler = async (client, message) => {
 					return client.reply(from, `[❌] Cadê a figurinha? Responda a figurinha que deseja converter com o comando:\n\n${prefix}stickertoimg`, id);
 				}
 				break;
+			case 'teste':
+				await client.simulateTyping(from, true);
+				setTimeout(function() {
+					client.simulateTyping(from, false);
+				}, 5000);
+				break;
 			// Sticker Creator
 			case 'sticker':
-				if ((isMedia || isQuotedImage) && args.length === 0) {
+			case 'figurinha':
+				if ((isMedia || isQuotedImage || isQuotedVideo) && args.length === 0) {
 					await client.reply(from, mess.wait, id);
 
-					var encryptMedia	= isQuotedImage ? quotedMsg : message;
-					var _mimetype		= isQuotedImage ? quotedMsg.mimetype : mimetype;
-					var mediaData		= await decryptMedia(encryptMedia, uaOverride);
-					var imageBase64		= `data:${_mimetype};base64,${mediaData.toString('base64')}`;
-					client.sendImageAsSticker(from, imageBase64)
-						.then(() => {
-							client.reply(from, '[✅] Pega aqui sua figurinha!');
-						});
-				} else if (args.length === 1) {
-					if (!isUrl(url)) {
-						await client.reply(from, mess.error.Iv, id);
-					}
-
-					await client.reply(from, mess.wait, id);
-
-					client.sendStickerfromUrl(from, url)
-						.then((r) => {
-							if (!r && r !== undefined) {
-								client.sendText(from, '[❌] Pô cara, tu tem que me mandar um link de alguma imagem!');
-							} else {
-								client.reply(from, '[✅] Pega aqui sua figurinha!');
-							}
-						});
-				} else {
-					await client.reply(from, `[❌] Cadê a imagem?\n\nEnvie ou responda uma foto com o comando\n${prefix}sticker\n\nOu então me envia uma mensagem com o comando:\n*${prefix}sticker [link_imagem]*`, id);
-				}
-				break;
-			case 'stickergif':
-				if (isMedia || isQuotedVideo) {
-					var encryptMedia	= isQuotedVideo ? quotedMsg : message;
-					var _mimetype		= isQuotedVideo ? quotedMsg.mimetype : mimetype;
+					var encryptMedia	= isQuotedImage || isQuotedVideo ? quotedMsg : message;
+					var _mimetype		= isQuotedImage || isQuotedVideo ? quotedMsg.mimetype : mimetype;
 					var mediaData		= await decryptMedia(encryptMedia, uaOverride);
 
-					if (_mimetype === 'video/mp4' && encryptMedia.duration < 10 || _mimetype === 'image/gif' && encryptMedia.duration < 10) {
-
-						client.reply(from, mess.wait, id);
-						var filename	= `./media/stickergif.${_mimetype.split('/')[1]}`
-						await fs.writeFileSync(filename, mediaData)
-						await exec(`gify ${filename} ./media/stickergf.gif --fps=30 --scale=240:240`, async function (error, stdout, stderr) {
-							var gif	 = await fs.readFileSync('./media/stickergf.gif', { encoding: "base64" })
-							await client.sendImageAsSticker(from, `data:image/gif;base64,${gif.toString('base64')}`)
-								.catch(() => {
-									client.reply(from, 'Desculpe, o arquivo é muito grande!', id)
+					if (_mimetype === 'video/mp4' || _mimetype === 'image/gif') {
+						if (encryptMedia.duration < 30) {
+							var imageBase64		= `data:${_mimetype};base64,${mediaData.toString('base64')}`;
+							await client.sendMp4AsSticker(from, imageBase64, null, { stickerMetadata: true, author: botName, pack: "PackDo" + botName, fps: 10, square: '512', loop: 0 })
+								.then(() => {
+									client.reply(from, '[✅] Pega aqui sua figurinha!', id);
 								})
-						})
+								.catch((err) => {
+									console.log(err);
+									client.reply(from, 'Desculpe, o arquivo é muito grande!', id)
+								});
+						} else {
+							await client.reply(from, '[❌] Pô cara, tu tem que me mandar algo ai de no máximo 30 segundos!', id)
+						}
 					} else {
-						client.reply(from, `[❌] Enviar ou responder um GIF com o comando *${prefix}stickerGif* (máx. 10s)`, id)
+						var imageBase64		= `data:${_mimetype};base64,${mediaData.toString('base64')}`;
+						await client.sendImageAsSticker(from, imageBase64, { author: botName, pack: "PackDo" + botName, keepScale: true })
+							.then(() => {
+								client.reply(from, '[✅] Pega aqui sua figurinha!', id);
+							})
+							.catch((err) => {
+								console.log(err);
+								client.reply(from, 'Desculpe, o arquivo é muito grande!', id)
+							});
 					}
 				} else if (args.length === 1) {
 					if (!isUrl(url)) {
@@ -906,13 +894,17 @@ module.exports = msgHandler = async (client, message) => {
 					client.sendStickerfromUrl(from, url)
 						.then((r) => {
 							if (!r && r !== undefined) {
-								client.sendText(from, '[❌] Pô cara, tu tem que me mandar um link de alguma imagem!');
+								client.sendText(from, '[❌] Pô cara, tu tem que me mandar um link de alguma imagem ou GIF né!');
 							} else {
-								client.reply(from, '[✅] Pega aqui sua figurinha!');
+								client.reply(from, '[✅] Pega aqui sua figurinha!', id);
 							}
+						})
+						.catch((err) => {
+							console.log(err);
+							client.reply(from, 'Desculpe, o arquivo é muito grande!', id)
 						});
 				} else {
-					client.reply(from, `[❌] Cadê?\n\nEnvie ou responda um GIF / Vídeo com o comando\n${prefix}stickerGif\n\nOu então me envia uma mensagem com o comando:\n*${prefix}stickerGif [link]*`, id);
+					await client.reply(from, `[❌] Cadê a foto ou o GIF?\n\nEnvie ou responda uma foto/gif com o comando\n${prefix}sticker\n\nOu então me envia uma mensagem com o comando:\n*${prefix}sticker [link_imagem/gif]*`, id);
 				}
 				break;
 			case 'stickergiphy':
@@ -1155,6 +1147,10 @@ module.exports = msgHandler = async (client, message) => {
 				}
 				break;
 			case 'escreva':
+				if (!isOwnerBot) {
+					return client.reply(from, 'Este comando está passando por manutenção!', id);
+				}
+
 				if (args.length == 0) {
 					return client.reply(from, `Faça o bot escrever o texto em uma imagem\nComando: *${prefix}escreva texto*\n\n*Exemplo:* ${prefix}escreva i love you 3000`, id);
 				}
@@ -1306,6 +1302,10 @@ module.exports = msgHandler = async (client, message) => {
 					})
 				break
 			case 'loli':
+				if (!isOwnerBot) {
+					return client.reply(from, 'Este comando está passando por manutenção!', id);
+				}
+
 				await client.reply(from, mess.wait, id);
 
 				var urlLoli	= `https://mhankbarbar.moe/api/randomloli?apiKey=${apiMhBar}`;
@@ -1602,7 +1602,10 @@ module.exports = msgHandler = async (client, message) => {
 					})
 				break;
 			case 'querotreta':
-				client.sendPtt(from, './media/queroTreta.mp4', id);
+				client.sendPtt(from, './media/queroTreta.mp3', id);
+				break;
+			case 'cheiroxoxota':
+				client.sendPtt(from, './media/cheiroXoxota.mpeg', id);
 				break;
 			case 'golvila':
 				client.sendPtt(from, './media/golVila.mp4', id);
@@ -1733,7 +1736,7 @@ module.exports = msgHandler = async (client, message) => {
 
 				await client.sendFile(from, ImgBase64, 'wanted.png', `🚨 *Procurado(a):* @${marker}\n-❥ *Crime:* ${crime[0]}\n-❥ *Pena:* 50 anos de reclusão e 500 dias-multa`, id, true)
 					.then((res) => {
-						client.sendPtt(from, './media/caraProcurado.mp3', res);
+						// client.sendPtt(from, './media/caraProcurado.mp3', res);
 					})
 					.catch((err) => {
 						client.reply(from, mess.error.cA, id);
@@ -2097,7 +2100,18 @@ module.exports = msgHandler = async (client, message) => {
 					client.reply(from, `Habilitar / Desabilitar NSFW\n\nComo usar:\n${prefix}nsfw on\n${prefix}nsfw off`, id);
 				}
 				break;
-				
+
+			case 'btn':
+				await client.sendButtons(from, 'Escolha uma das opções abaixo:',  [
+					{
+						"id": "id1",
+						"text": "Botão 1"
+					}, {
+						"id": "id2",
+						"text": "Botão 2"
+					}
+				], "Isso é um teste de botões", "Esse texto vai dentro do corpo da mensagem dos botões");
+				break;
 			// Owner Group
 			case 'expulsartodos': // remover todos os membros
 				if (!isGroupMsg) {
@@ -2132,12 +2146,9 @@ module.exports = msgHandler = async (client, message) => {
 				const chatIds			= await client.getAllChatIds();
 				const groups			= await client.getAllGroups();
 
-				// const batteryLevel		= await client.getBatteryLevel();
-            	// const isPlugged			= await client.getIsPlugged(from);
-            	// const connectionState	= await client.getConnectionState();
-				const batteryLevel		= 100;
-				const isPlugged			= true;
-				const connectionState	= 'CONNECTED';
+				const batteryLevel		= await client.getBatteryLevel();
+            	const isPlugged			= await client.getIsPlugged(from);
+            	const connectionState	= await client.getConnectionState();
             
 				await client.reply(from, `Informações:\n-❥ *Status:* ${connectionState}\n-❥ *Bateria:* ${batteryLevel}%\n-❥ *Carregando:* ${(isPlugged) ? '✅' : '❌' }\n\nContadores:\n-❥ *Mensagens:* ${loadedMsg}\n-❥ *Grupos:* ${groups.length}\n-❥ *Conversas:* ${chatIds.length - groups.length}\n-❥ *Total:* ${chatIds.length}`, id);
 				break;

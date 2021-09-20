@@ -17,7 +17,7 @@
   "homepage": "https://github.com/fmedeiros95/zyron-bot",
   "license": "ISC",
   "dependencies": {
-    "@open-wa/wa-automate": "^4.10.0",
+    "@open-wa/wa-automate": "^4.20.6",
     "app-root-path": "^3.0.0",
     "axios": "^0.21.0",
     "chalk": "^4.1.0",
